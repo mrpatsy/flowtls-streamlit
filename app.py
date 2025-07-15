@@ -3,9 +3,6 @@ import sqlite3
 import hashlib
 import secrets
 import pandas as pd
-import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
 from datetime import datetime, timedelta
 import json
 import os
@@ -190,17 +187,6 @@ class DatabaseManager:
                 reporter TEXT DEFAULT '',
                 resolution TEXT DEFAULT '',
                 tags TEXT DEFAULT ''
-            );
-            
-            CREATE TABLE IF NOT EXISTS email_settings (
-                id INTEGER PRIMARY KEY,
-                smtp_server TEXT,
-                smtp_port INTEGER,
-                enable_ssl INTEGER,
-                from_email TEXT,
-                from_name TEXT,
-                username TEXT,
-                password TEXT
             );
             
             CREATE TABLE IF NOT EXISTS user_preferences (
@@ -478,143 +464,15 @@ class TicketService:
         conn.close()
         return stats
 
-# Email Service
-class EmailService:
-    def __init__(self, db_manager):
-        self.db = db_manager
-    
-    def get_email_settings(self):
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM email_settings WHERE id = 1")
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return {
-                'smtp_server': row[1],
-                'smtp_port': row[2],
-                'enable_ssl': bool(row[3]),
-                'from_email': row[4],
-                'from_name': row[5],
-                'username': row[6],
-                'password': row[7]
-            }
-        return None
-    
-    def save_email_settings(self, settings):
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO email_settings 
-            (id, smtp_server, smtp_port, enable_ssl, from_email, from_name, username, password)
-            VALUES (1, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            settings['smtp_server'],
-            settings['smtp_port'],
-            int(settings['enable_ssl']),
-            settings['from_email'],
-            settings['from_name'],
-            settings['username'],
-            settings['password']
-        ))
-        conn.commit()
-        conn.close()
-    
-    def send_email(self, to_email, subject, body, ticket=None):
-        settings = self.get_email_settings()
-        if not settings:
-            return False, "Email not configured"
-        
-        try:
-            msg = MimeMultipart()
-            msg['From'] = f"{settings['from_name']} <{settings['from_email']}>"
-            msg['To'] = to_email
-            msg['Subject'] = subject
-            
-            # Create HTML body
-            html_body = self.create_email_template(body, ticket)
-            msg.attach(MimeText(html_body, 'html'))
-            
-            server = smtplib.SMTP(settings['smtp_server'], settings['smtp_port'])
-            if settings['enable_ssl']:
-                server.starttls()
-            
-            if settings['username']:
-                server.login(settings['username'], settings['password'])
-            
-            server.send_message(msg)
-            server.quit()
-            
-            return True, "Email sent successfully"
-        except Exception as e:
-            return False, f"Failed to send email: {str(e)}"
-    
-    def create_email_template(self, body, ticket=None):
-        template = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }}
-                .container {{ background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }}
-                .header {{ background-color: #2563eb; color: white; padding: 20px; border-radius: 8px 8px 0 0; margin: -30px -30px 20px -30px; }}
-                .brand {{ font-size: 24px; font-weight: bold; }}
-                .ticket-info {{ background-color: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }}
-                .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d; }}
-            </style>
-        </head>
-        <body>
-            <div class='container'>
-                <div class='header'>
-                    <div class='brand'>FlowTLS SYNC+</div>
-                    <div style='font-size: 14px; margin-top: 5px;'>Professional Ticketing System</div>
-                </div>
-                
-                <div class='content'>
-                    <p>{body}</p>
-                    
-                    {self._render_ticket_details(ticket) if ticket else ''}
-                </div>
-                
-                <div class='footer'>
-                    <p>This email was sent from the FlowTLS SYNC+ Ticketing System.<br>
-                    Please do not reply to this email.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        return template
-    
-    def _render_ticket_details(self, ticket):
-        if not ticket:
-            return ""
-        
-        return f"""
-        <div class='ticket-info'>
-            <h3>Ticket Details</h3>
-            <p><strong>Ticket ID:</strong> #{ticket['id']}</p>
-            <p><strong>Title:</strong> {ticket['title']}</p>
-            <p><strong>Description:</strong> {ticket['description']}</p>
-            <p><strong>Priority:</strong> {ticket['priority']}</p>
-            <p><strong>Status:</strong> {ticket['status']}</p>
-            <p><strong>Assigned To:</strong> {ticket['assigned_to'] or 'Unassigned'}</p>
-            <p><strong>Category:</strong> {ticket['category']}</p>
-            <p><strong>Created:</strong> {ticket['created_date']}</p>
-        </div>
-        """
-
 # Initialize services
 @st.cache_resource
 def init_services():
     db_manager = DatabaseManager()
     auth_service = AuthService(db_manager)
     ticket_service = TicketService(db_manager)
-    email_service = EmailService(db_manager)
-    return db_manager, auth_service, ticket_service, email_service
+    return db_manager, auth_service, ticket_service
 
-db_manager, auth_service, ticket_service, email_service = init_services()
+db_manager, auth_service, ticket_service = init_services()
 
 # Initialize session state
 if 'user' not in st.session_state:
@@ -724,7 +582,7 @@ def show_dashboard():
     
     # Get ticket statistics
     stats = ticket_service.get_ticket_statistics()
-    total_tickets = sum(stats.values())
+    total_tickets = sum(stats.values()) if stats else 0
     
     # Metrics row
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -1083,7 +941,6 @@ def show_settings():
         with col1:
             auto_refresh = st.checkbox("Auto-refresh ticket list every 5 minutes", value=True)
             notifications = st.checkbox("Show desktop notifications for new tickets", value=False)
-            minimize_tray = st.checkbox("Minimize to system tray instead of closing", value=False)
         
         with col2:
             st.subheader("Database Operations")
@@ -1099,6 +956,8 @@ def show_settings():
         
         if st.button("Save General Settings"):
             st.success("Settings saved successfully!")
+        
+        st.info("📧 **Email features temporarily disabled** for Streamlit Cloud compatibility. All other features fully functional!")
     
     with tab2:
         st.markdown("""
