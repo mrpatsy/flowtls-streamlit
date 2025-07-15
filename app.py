@@ -35,8 +35,19 @@ st.markdown("""
         border-radius: 0.5rem;
         padding: 1rem;
         margin: 0.5rem 0;
-        background: white;
+        background: #f8f9fa;
+        color: #1f2937;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .ticket-card h4 {
+        color: #1f2937 !important;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .ticket-card p {
+        color: #4b5563 !important;
+        margin: 0.5rem 0;
     }
     
     .priority-critical {
@@ -114,6 +125,11 @@ st.markdown("""
     .overdue {
         border-left: 4px solid #ef4444;
         background-color: #fef2f2;
+        color: #1f2937 !important;
+    }
+    
+    .overdue h4 {
+        color: #dc2626 !important;
     }
     
     .metric-card {
@@ -141,6 +157,16 @@ st.markdown("""
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+    
+    /* Ensure all text in main content is readable */
+    .main .block-container {
+        color: #1f2937;
+    }
+    
+    /* Fix any white text issues */
+    .stMarkdown, .stText {
+        color: #1f2937 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -618,8 +644,8 @@ def show_dashboard():
             with st.container():
                 st.markdown(f"""
                     <div class="ticket-card">
-                        <h4>#{ticket['id']} - {ticket['title']}</h4>
-                        <p>{ticket['description'][:100]}...</p>
+                        <h4 style="color: #1f2937 !important;">#{ticket['id']} - {ticket['title']}</h4>
+                        <p style="color: #4b5563 !important;">{ticket['description'][:100]}...</p>
                         <div>
                             <span class="priority-{ticket['priority'].lower()}">{ticket['priority']}</span>
                             <span class="status-{ticket['status'].lower().replace(' ', '-')}">{ticket['status']}</span>
@@ -706,14 +732,14 @@ def display_ticket_list(tickets, show_actions=True):
             with col1:
                 st.markdown(f"""
                     <div class="ticket-card {overdue_class}">
-                        <h4>#{ticket['id']} - {ticket['title']}</h4>
-                        <p>{ticket['description'][:150]}{'...' if len(ticket['description']) > 150 else ''}</p>
+                        <h4 style="color: #1f2937 !important; margin-bottom: 0.5rem;">#{ticket['id']} - {ticket['title']}</h4>
+                        <p style="color: #4b5563 !important; margin-bottom: 0.75rem;">{ticket['description'][:150]}{'...' if len(ticket['description']) > 150 else ''}</p>
                         <div style="margin-top: 10px;">
                             <span class="priority-{ticket['priority'].lower()}">{ticket['priority']}</span>
                             <span class="status-{ticket['status'].lower().replace(' ', '-')}">{ticket['status']}</span>
-                            <span style="margin-left: 10px;">📁 {ticket['category']}</span>
-                            <span style="margin-left: 10px;">👤 {ticket['assigned_to'] or 'Unassigned'}</span>
-                            <span style="margin-left: 10px;">📅 {format_date(ticket['created_date'])}</span>
+                            <span style="margin-left: 10px; color: #4b5563;">📁 {ticket['category']}</span>
+                            <span style="margin-left: 10px; color: #4b5563;">👤 {ticket['assigned_to'] or 'Unassigned'}</span>
+                            <span style="margin-left: 10px; color: #4b5563;">📅 {format_date(ticket['created_date'])}</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
