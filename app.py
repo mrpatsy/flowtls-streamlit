@@ -1,251 +1,17 @@
-import streamlit as st
-import sqlite3
-import hashlib
-import secrets
-import pandas as pd
-from datetime import datetime, timedelta
-import json
-import os
-import csv
-from io import StringIO
-import plotly.express as px
-import plotly.graph_objects as go
-from typing import Dict, List, Optional, Tuple
-import threading
-
-# Configure page
-st.set_page_config(
-    page_title="FlowTLS SYNC+ Professional",
-    page_icon="🎫",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Enhanced CSS for professional styling
-st.markdown("""
-<style>
-    .main-header {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
-        padding: 1.5rem 2rem;
-        border-radius: 0.75rem;
-        margin-bottom: 2rem;
-        color: white;
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
+user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                    user_data.get('can_export_data', 0), user_id
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True
+                
+            except Exception as e:
+                st.error(f"Error updating user: {str(e)}")
+                return False
     
-    .ticket-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        color: #1f2937;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-    }
-    
-    .ticket-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        border-color: #3b82f6;
-    }
-    
-    .ticket-card h4 {
-        color: #1f2937 !important;
-        margin: 0 0 0.75rem 0;
-        font-weight: 600;
-    }
-    
-    .ticket-card p {
-        color: #4b5563 !important;
-        margin: 0.5rem 0 1rem 0;
-        line-height: 1.5;
-    }
-    
-    .priority-critical {
-        background: linear-gradient(135deg, #dc2626, #ef4444);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .priority-high {
-        background: linear-gradient(135deg, #ea580c, #f59e0b);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .priority-medium {
-        background: linear-gradient(135deg, #2563eb, #3b82f6);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .priority-low {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .status-open {
-        background: linear-gradient(135deg, #2563eb, #3b82f6);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .status-in-progress {
-        background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .status-resolved {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .status-closed {
-        background: linear-gradient(135deg, #4b5563, #6b7280);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .overdue {
-        border-left: 4px solid #dc2626;
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        color: #1f2937 !important;
-    }
-    
-    .overdue h4 {
-        color: #dc2626 !important;
-    }
-    
-    .user-role-admin {
-        background: linear-gradient(135deg, #7c2d12, #ea580c);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .user-role-manager {
-        background: linear-gradient(135deg, #1e40af, #3b82f6);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .user-role-agent {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .user-role-user {
-        background: linear-gradient(135deg, #4b5563, #6b7280);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .comment-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin: 0.75rem 0;
-        border-left: 4px solid #3b82f6;
-    }
-    
-    .comment-internal {
-        border-left-color: #f59e0b;
-        background: #fffbeb;
-    }
-    
-    .user-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-    }
-    
-    .user-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        border-color: #3b82f6;
-    }
-    
-    .user-inactive {
-        opacity: 0.6;
-        border-left: 4px solid #dc2626;
-    }
-    
-    .stButton > button {
-        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Thread-safe database connection lock
-db_lock = threading.Lock()
-
-# Enhanced Database Manager
-class DatabaseManager:
     def deactivate_user(self, user_id: int) -> bool:
         with db_lock:
             try:
@@ -442,42 +208,6 @@ class TicketService:
             except Exception as e:
                 st.error(f"Error creating ticket: {str(e)}")
                 return 0
-    
-    def update_ticket(self, ticket_id: int, ticket_data: Dict) -> bool:
-        with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    UPDATE tickets SET title=?, description=?, priority=?, status=?, assigned_to=?, 
-                                     category=?, subcategory=?, updated_date=?, resolution=?, tags=?,
-                                     estimated_hours=?, actual_hours=?, company_id=?
-                    WHERE id=?
-                """, (
-                    ticket_data['title'],
-                    ticket_data['description'],
-                    ticket_data['priority'],
-                    ticket_data['status'],
-                    ticket_data.get('assigned_to', ''),
-                    ticket_data['category'],
-                    ticket_data.get('subcategory', ''),
-                    datetime.now().isoformat(),
-                    ticket_data.get('resolution', ''),
-                    ticket_data.get('tags', ''),
-                    ticket_data.get('estimated_hours', 0),
-                    ticket_data.get('actual_hours', 0),
-                    ticket_data.get('company_id', ''),
-                    ticket_id
-                ))
-                
-                conn.commit()
-                conn.close()
-                return True
-                
-            except Exception as e:
-                st.error(f"Error updating ticket: {str(e)}")
-                return False
     
     def get_ticket_statistics(self, user_id: int, permissions: Dict, user_name: str) -> Dict:
         with db_lock:
@@ -1538,7 +1268,256 @@ def main():
         st.info("Please refresh the page to continue.")
 
 if __name__ == "__main__":
-    main() __init__(self, db_path="flowtls_professional.db"):
+    main()
+            import streamlit as st
+import sqlite3
+import hashlib
+import secrets
+import pandas as pd
+from datetime import datetime, timedelta
+import json
+import os
+import csv
+from io import StringIO
+import plotly.express as px
+import plotly.graph_objects as go
+from typing import Dict, List, Optional, Tuple
+import threading
+
+# Configure page
+st.set_page_config(
+    page_title="FlowTLS SYNC+ Professional",
+    page_icon="🎫",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Enhanced CSS for professional styling
+st.markdown("""
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+        padding: 1.5rem 2rem;
+        border-radius: 0.75rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .ticket-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin: 0.75rem 0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        color: #1f2937;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    
+    .ticket-card h4 {
+        color: #1f2937 !important;
+        margin: 0 0 0.75rem 0;
+        font-weight: 600;
+    }
+    
+    .ticket-card p {
+        color: #4b5563 !important;
+        margin: 0.5rem 0 1rem 0;
+        line-height: 1.5;
+    }
+    
+    .priority-critical {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .priority-high {
+        background: linear-gradient(135deg, #ea580c, #f59e0b);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .priority-medium {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .priority-low {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-open {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .status-in-progress {
+        background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .status-resolved {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .status-closed {
+        background: linear-gradient(135deg, #4b5563, #6b7280);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .overdue {
+        border-left: 4px solid #dc2626;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        color: #1f2937 !important;
+    }
+    
+    .overdue h4 {
+        color: #dc2626 !important;
+    }
+    
+    .user-role-admin {
+        background: linear-gradient(135deg, #7c2d12, #ea580c);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .user-role-manager {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .user-role-agent {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .user-role-user {
+        background: linear-gradient(135deg, #4b5563, #6b7280);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .comment-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 0.75rem 0;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .comment-internal {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+    }
+    
+    .user-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin: 0.75rem 0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    
+    .user-inactive {
+        opacity: 0.6;
+        border-left: 4px solid #dc2626;
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Thread-safe database connection lock
+db_lock = threading.Lock()
+
+# Enhanced Database Manager
+class DatabaseManager:
+    def __init__(self, db_path="flowtls_professional.db"):
         self.db_path = db_path
         self._init_database()
     
@@ -2001,18 +1980,4 @@ class UserService:
                 """, (
                     user_data['first_name'], user_data['last_name'], user_data['role'],
                     user_data['department'], user_data.get('phone', ''), user_data.get('company_id', ''),
-                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
-                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
-                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
-                    user_data.get('can_export_data', 0), user_id
-                ))
-                
-                conn.commit()
-                conn.close()
-                return True
-                
-            except Exception as e:
-                st.error(f"Error updating user: {str(e)}")
-                return False
-    
-    def
+                    user_data.get('can_create_users',
