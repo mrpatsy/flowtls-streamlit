@@ -705,14 +705,14 @@ def init_services():
         auth_service = AuthService(db_manager)
         ticket_service = TicketService(db_manager)
         user_service = UserService(db_manager)
-        return db_manager, auth_service, ticket_service, user_service
+        user_management_service = UserManagementService(db_manager)
+        return db_manager, auth_service, ticket_service, user_service, user_management_service
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
 
 try:
-    db_manager, auth_service, ticket_service, user_service = init_services()
-    user_management_service = UserManagementService(db_manager)
+    db_manager, auth_service, ticket_service, user_service, user_management_service = init_services()
 except Exception as e:
     st.error("Application initialization failed. Please refresh the page.")
     st.stop()
@@ -1051,6 +1051,23 @@ def show_create_ticket_page():
                     'description': description,
                     'priority': priority,
                     'status': status,
+                    'category': category,
+                    'subcategory': subcategory,
+                    'assigned_to': assigned_to,
+                    'tags': tags,
+                    'company_id': company_options[company_name]
+                }
+                
+                if ticket_service.create_ticket(ticket_data, st.session_state.user['full_name']):
+                    st.success("✅ Ticket created successfully!")
+                    st.balloons()
+                    if st.button("Go to Dashboard"):
+                        st.session_state.page = 'dashboard'
+                        st.rerun()
+                else:
+                    st.error("❌ Failed to create ticket. Please try again.")
+            else:
+                st.error("❌ Please fill in all required fields (marked with *)")
                     'category': category,
                     'subcategory': subcategory,
                     'assigned_to': assigned_to,
