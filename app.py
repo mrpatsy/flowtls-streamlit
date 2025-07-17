@@ -518,6 +518,134 @@ class TicketService:
                         FROM tickets ORDER BY created_date DESC
                     """)
                 else:
+                    cursor.execute("""
+                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                               created_date, updated_date, due_date, reporter, resolution, tags,
+                               estimated_hours, actual_hours, company_id, source
+                        FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
+                    """, (user_name, user_name))
+                
+                tickets = []
+                for row in cursor.fetchall():
+                    ticket = {
+                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
+                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
+                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
+                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
+                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
+                        'company_id': row[16], 'source': row[17],
+                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                    }
+                    tickets.append(ticket)
+                
+                conn.close()
+                return tickets
+            except Exception as e:
+                st.error(f"Error retrieving tickets: {str(e)}")
+                return []
+    
+    def is_ticket_overdue(self, due_date: str, status: str) -> bool:
+        if not due_date or status in ['Resolved', 'Closed']:
+            return False
+        try:
+            due = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+            return due < datetime.now()
+        except:
+            return False
+    
+    def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
+                due_date = datetime.now() + timedelta(hours=hours_to_add)
+                
+                cursor.execute("""
+                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                       subcategory, created_date, due_date, reporter, tags, company_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                    ticket_data['subcategory'], datetime.now().isoformat(), due_date.isoformat(),
+                    user_name, ticket_data['tags'], ticket_data['company_id']
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True
+            except Exception as e:
+                st.error(f"Error creating ticket: {str(e)}")
+                return False
+
+def init_services():
+    try:
+        db_manager = DatabaseManager()
+        auth_service = AuthService(db_manager)
+        ticket_service = TicketService(db_manager)
+        user_service = UserService(db_manager)
+        return db_manager, auth_service, ticket_service, user_service
+    except Exception as e:
+        st.error(f"Failed to initialize services: {str(e)}")
+        st.stop()
+
+try:
+    db_manager, auth_service, ticket_service, user_service = init_services()
+except Exception as e:
+    st.error("Application initialization failed. Please refresh the page.")
+    st.stop()
+
+if 'user' not in st.session_state:
+    st.session_state.user = None
+if 'page' not in st.session_state:
+    st.session_state.page = 'login'
+
+def require_auth(permission: str = None) -> bool:
+    if not st.session_state.user:
+        st.session_state.page = 'login'
+        return False
+    if permission and not st.session_state.user.get('permissions', {}).get(permission, False):
+        st.error("⚠️ Access Denied: You don't have permission for this action")
+        return False
+    return True
+
+def format_date(date_str: str) -> str:
+    if not date_str:
+        return "N/A"
+    try:
+        if isinstance(date_str, str):
+            date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        else:
+            date_obj = date_str
+        return date_obj.strftime("%b %d, %Y %I:%M %p")
+    except:
+        return str(date_str)
+
+def show_login_page():
+    st.markdown('<div class="main-header"><h1>🎫 FlowTLS SYNC+ Professional</h1><p>Enterprise Ticketing & Service Management Platform</p></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("### Sign In")
+        with st.form("login_form"):
+            username = st.text_input("Username", placeholder="Enter your username")
+            password = st.text_input("Password", type="password", placeholder="Enter your password")
+            submitted = st.form_submit_button("Sign In", use_container_width=True)
+            
+            if submitted:
+                if username and password:
+                    try:
+                        success, user, error_msg = auth_service.login(username, password)
+                        if success:
+                            st.session_state.user = user
+                            st.session_state.page = 'dashboard'
+                            st.rerun()
+                        else:
+                            st.error(error_msg)
+                    except Exception as e:
+                        st.error(f"Login error: {str(e)}")
+                else:
                     st.error("Please enter both username and password")
         
         with st.expander("🎭 Demo User Accounts", expanded=True):
@@ -552,12 +680,16 @@ def show_dashboard():
             if st.button("📊 Analytics", use_container_width=True):
                 st.session_state.page = 'analytics'
                 st.rerun()
+        else:
+            st.empty()
     
     with col4:
         if user['permissions'].get('can_create_users', False):
             if st.button("👥 Manage Users", use_container_width=True):
                 st.session_state.page = 'users'
                 st.rerun()
+        else:
+            st.empty()
     
     # Dashboard Metrics
     st.subheader("📈 Dashboard Overview")
@@ -664,7 +796,7 @@ def show_dashboard():
             with st.container():
                 st.markdown(f'''
                 <div class="ticket-card">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <h4 style="margin: 0;">#{ticket['id']} - {ticket['title']}</h4>
                         {'<span class="overdue-indicator">⚠️ OVERDUE</span>' if ticket['is_overdue'] else ''}
                     </div>
@@ -673,7 +805,7 @@ def show_dashboard():
                         <span class="status-{ticket['status'].lower().replace(' ', '-')}">{ticket['status']}</span>
                     </div>
                     <p style="margin: 0.5rem 0; color: #6b7280;">{ticket['description'][:100]}{'...' if len(ticket['description']) > 100 else ''}</p>
-                    <div style="display: flex; justify-content: between; align-items: center; font-size: 0.85rem; color: #6b7280;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #6b7280;">
                         <span><strong>Company:</strong> {company_name}</span>
                         <span><strong>Assigned:</strong> {ticket['assigned_to']}</span>
                         <span><strong>Due:</strong> {format_date(ticket['due_date'])}</span>
@@ -723,7 +855,7 @@ def show_tickets_page():
         with st.container():
             st.markdown(f'''
             <div class="ticket-card">
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <h4 style="margin: 0;">#{ticket['id']} - {ticket['title']}</h4>
                     {'<span class="overdue-indicator">⚠️ OVERDUE</span>' if ticket['is_overdue'] else ''}
                 </div>
@@ -865,131 +997,4 @@ def main():
         st.info("Please refresh the page to continue.")
 
 if __name__ == "__main__":
-    main()cursor.execute("""
-                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                               created_date, updated_date, due_date, reporter, resolution, tags,
-                               estimated_hours, actual_hours, company_id, source
-                        FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
-                    """, (user_name, user_name))
-                
-                tickets = []
-                for row in cursor.fetchall():
-                    ticket = {
-                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
-                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
-                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
-                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
-                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
-                        'company_id': row[16], 'source': row[17],
-                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
-                    }
-                    tickets.append(ticket)
-                
-                conn.close()
-                return tickets
-            except Exception as e:
-                st.error(f"Error retrieving tickets: {str(e)}")
-                return []
-    
-    def is_ticket_overdue(self, due_date: str, status: str) -> bool:
-        if not due_date or status in ['Resolved', 'Closed']:
-            return False
-        try:
-            due = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
-            return due < datetime.now()
-        except:
-            return False
-    
-    def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
-        with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
-                due_date = datetime.now() + timedelta(hours=hours_to_add)
-                
-                cursor.execute("""
-                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                       subcategory, created_date, due_date, reporter, tags, company_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
-                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
-                    ticket_data['subcategory'], datetime.now().isoformat(), due_date.isoformat(),
-                    user_name, ticket_data['tags'], ticket_data['company_id']
-                ))
-                
-                conn.commit()
-                conn.close()
-                return True
-            except Exception as e:
-                st.error(f"Error creating ticket: {str(e)}")
-                return False
-
-def init_services():
-    try:
-        db_manager = DatabaseManager()
-        auth_service = AuthService(db_manager)
-        ticket_service = TicketService(db_manager)
-        user_service = UserService(db_manager)
-        return db_manager, auth_service, ticket_service, user_service
-    except Exception as e:
-        st.error(f"Failed to initialize services: {str(e)}")
-        st.stop()
-
-try:
-    db_manager, auth_service, ticket_service, user_service = init_services()
-except Exception as e:
-    st.error("Application initialization failed. Please refresh the page.")
-    st.stop()
-
-if 'user' not in st.session_state:
-    st.session_state.user = None
-if 'page' not in st.session_state:
-    st.session_state.page = 'login'
-
-def require_auth(permission: str = None) -> bool:
-    if not st.session_state.user:
-        st.session_state.page = 'login'
-        return False
-    if permission and not st.session_state.user.get('permissions', {}).get(permission, False):
-        st.error("⚠️ Access Denied: You don't have permission for this action")
-        return False
-    return True
-
-def format_date(date_str: str) -> str:
-    if not date_str:
-        return "N/A"
-    try:
-        if isinstance(date_str, str):
-            date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        else:
-            date_obj = date_str
-        return date_obj.strftime("%b %d, %Y %I:%M %p")
-    except:
-        return str(date_str)
-
-def show_login_page():
-    st.markdown('<div class="main-header"><h1>🎫 FlowTLS SYNC+ Professional</h1><p>Enterprise Ticketing & Service Management Platform</p></div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("### Sign In")
-        with st.form("login_form"):
-            username = st.text_input("Username", placeholder="Enter your username")
-            password = st.text_input("Password", type="password", placeholder="Enter your password")
-            submitted = st.form_submit_button("Sign In", use_container_width=True)
-            
-            if submitted:
-                if username and password:
-                    try:
-                        success, user, error_msg = auth_service.login(username, password)
-                        if success:
-                            st.session_state.user = user
-                            st.session_state.page = 'dashboard'
-                            st.rerun()
-                        else:
-                            st.error(error_msg)
-                    except Exception as e:
-                        st.error(f"Login error: {str(e)}")
-                else:
+    main()
