@@ -11,6 +11,7 @@ from io import StringIO
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, List, Optional, Tuple
+import threading
 
 # Configure page
 st.set_page_config(
@@ -232,81 +233,110 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Simple but Professional Database Manager
+# Thread-safe database connection lock
+db_lock = threading.Lock()
+
+# Improved Database Manager with better error handling
 class DatabaseManager:
     def __init__(self, db_path="flowtls_professional.db"):
         self.db_path = db_path
-        self.init_database()
+        self._init_database()
     
     def get_connection(self):
-        return sqlite3.connect(self.db_path, check_same_thread=False)
+        """Get a database connection with proper configuration for Streamlit"""
+        try:
+            conn = sqlite3.connect(
+                self.db_path, 
+                check_same_thread=False,
+                timeout=20.0,
+                isolation_level=None  # Autocommit mode
+            )
+            conn.execute("PRAGMA journal_mode=WAL")  # Better for concurrent access
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA cache_size=1000")
+            conn.execute("PRAGMA temp_store=MEMORY")
+            return conn
+        except Exception as e:
+            st.error(f"Database connection error: {str(e)}")
+            raise
     
-    def init_database(self):
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
-        # Simple, reliable schema
-        cursor.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                salt TEXT NOT NULL,
-                first_name TEXT NOT NULL,
-                last_name TEXT NOT NULL,
-                role TEXT DEFAULT 'User',
-                department TEXT DEFAULT '',
-                phone TEXT DEFAULT '',
-                is_active INTEGER DEFAULT 1,
-                created_date TEXT NOT NULL,
-                last_login_date TEXT
-            );
-            
-            CREATE TABLE IF NOT EXISTS tickets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                description TEXT NOT NULL,
-                priority TEXT DEFAULT 'Medium',
-                status TEXT DEFAULT 'Open',
-                assigned_to TEXT DEFAULT '',
-                category TEXT DEFAULT 'General',
-                subcategory TEXT DEFAULT '',
-                created_date TEXT NOT NULL,
-                updated_date TEXT,
-                due_date TEXT,
-                reporter TEXT DEFAULT '',
-                resolution TEXT DEFAULT '',
-                tags TEXT DEFAULT '',
-                estimated_hours REAL DEFAULT 0,
-                actual_hours REAL DEFAULT 0
-            );
-            
-            CREATE TABLE IF NOT EXISTS ticket_comments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticket_id INTEGER NOT NULL,
-                user_name TEXT NOT NULL,
-                comment TEXT NOT NULL,
-                is_internal INTEGER DEFAULT 0,
-                created_date TEXT NOT NULL,
-                FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-            );
-        """)
-        
-        # Create default users if none exist
-        cursor.execute("SELECT COUNT(*) FROM users")
-        if cursor.fetchone()[0] == 0:
-            self.create_default_users()
-        
-        # Add sample tickets if none exist
-        cursor.execute("SELECT COUNT(*) FROM tickets")
-        if cursor.fetchone()[0] == 0:
-            self.create_sample_tickets()
-        
-        conn.commit()
-        conn.close()
+    def _init_database(self):
+        """Initialize database with proper error handling"""
+        with db_lock:
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                
+                # Create tables with error handling
+                cursor.executescript("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        salt TEXT NOT NULL,
+                        first_name TEXT NOT NULL,
+                        last_name TEXT NOT NULL,
+                        role TEXT DEFAULT 'User',
+                        department TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        is_active INTEGER DEFAULT 1,
+                        created_date TEXT NOT NULL,
+                        last_login_date TEXT
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS tickets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        priority TEXT DEFAULT 'Medium',
+                        status TEXT DEFAULT 'Open',
+                        assigned_to TEXT DEFAULT '',
+                        category TEXT DEFAULT 'General',
+                        subcategory TEXT DEFAULT '',
+                        created_date TEXT NOT NULL,
+                        updated_date TEXT,
+                        due_date TEXT,
+                        reporter TEXT DEFAULT '',
+                        resolution TEXT DEFAULT '',
+                        tags TEXT DEFAULT '',
+                        estimated_hours REAL DEFAULT 0,
+                        actual_hours REAL DEFAULT 0
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS ticket_comments (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ticket_id INTEGER NOT NULL,
+                        user_name TEXT NOT NULL,
+                        comment TEXT NOT NULL,
+                        is_internal INTEGER DEFAULT 0,
+                        created_date TEXT NOT NULL,
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                    );
+                """)
+                
+                # Check if we need to create default data
+                cursor.execute("SELECT COUNT(*) FROM users")
+                user_count = cursor.fetchone()[0]
+                
+                if user_count == 0:
+                    self._create_default_users(cursor)
+                
+                cursor.execute("SELECT COUNT(*) FROM tickets")
+                ticket_count = cursor.fetchone()[0]
+                
+                if ticket_count == 0:
+                    self._create_sample_tickets(cursor)
+                
+                conn.commit()
+                conn.close()
+                
+            except Exception as e:
+                st.error(f"Database initialization error: {str(e)}")
+                raise
     
-    def create_default_users(self):
+    def _create_default_users(self, cursor):
+        """Create default users with proper error handling"""
         users = [
             ("admin", "admin@flowtls.com", "admin123", "System", "Administrator", "Admin", "IT", "+1-555-0001"),
             ("jsmith", "john.smith@flowtls.com", "password123", "John", "Smith", "Manager", "Support", "+1-555-0002"),
@@ -314,24 +344,22 @@ class DatabaseManager:
             ("sjohnson", "sarah.johnson@flowtls.com", "password123", "Sarah", "Johnson", "User", "Operations", "+1-555-0005"),
         ]
         
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
         for username, email, password, first_name, last_name, role, department, phone in users:
-            salt = secrets.token_hex(32)
-            password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
-            
-            cursor.execute("""
-                INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
-                                 role, department, phone, created_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (username, email, password_hash, salt, first_name, last_name, role, 
-                  department, phone, datetime.now().isoformat()))
-        
-        conn.commit()
-        conn.close()
+            try:
+                salt = secrets.token_hex(32)
+                password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+                
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
+                                     role, department, phone, created_date)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (username, email, password_hash, salt, first_name, last_name, role, 
+                      department, phone, datetime.now().isoformat()))
+            except Exception as e:
+                st.error(f"Error creating user {username}: {str(e)}")
     
-    def create_sample_tickets(self):
+    def _create_sample_tickets(self, cursor):
+        """Create sample tickets with proper error handling"""
         sample_tickets = [
             ("FlowTLS Integration Critical Error", "System integration completely failing - production down", "Critical", "Open", "John Smith", "Integration", "System Integration", "Sarah Johnson", "urgent,integration,flowtls,production"),
             ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department"),
@@ -345,80 +373,88 @@ class DatabaseManager:
             ("Security Policy Update", "Update password requirements and implement 2FA to meet compliance standards", "Medium", "Closed", "Alice Chen", "Security", "Policy Management", "System Administrator", "password,policy,security,2fa,compliance"),
         ]
         
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        
         for i, (title, desc, priority, status, assigned_to, category, subcategory, reporter, tags) in enumerate(sample_tickets):
-            # Calculate due dates based on priority
-            hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
-            due_date = datetime.now() + timedelta(hours=hours_to_add)
-            
-            # Some tickets should be overdue for demonstration
-            if i % 4 == 0 and status in ["Open", "In Progress"]:
-                due_date = datetime.now() - timedelta(hours=2)
-            
-            cursor.execute("""
-                INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                   subcategory, created_date, due_date, reporter, tags)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (title, desc, priority, status, assigned_to, category, subcategory, 
-                  (datetime.now() - timedelta(days=i)).isoformat(), due_date.isoformat(), reporter, tags))
-        
-        conn.commit()
-        conn.close()
+            try:
+                # Calculate due dates based on priority
+                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
+                due_date = datetime.now() + timedelta(hours=hours_to_add)
+                
+                # Some tickets should be overdue for demonstration
+                if i % 4 == 0 and status in ["Open", "In Progress"]:
+                    due_date = datetime.now() - timedelta(hours=2)
+                
+                cursor.execute("""
+                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                       subcategory, created_date, due_date, reporter, tags)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (title, desc, priority, status, assigned_to, category, subcategory, 
+                      (datetime.now() - timedelta(days=i)).isoformat(), due_date.isoformat(), reporter, tags))
+            except Exception as e:
+                st.error(f"Error creating sample ticket {i}: {str(e)}")
 
-# Simple Authentication Service
+# Improved Authentication Service with better error handling
 class AuthService:
     def __init__(self, db_manager):
         self.db = db_manager
     
     def hash_password(self, password: str, salt: str) -> str:
+        """Hash password with salt"""
         return hashlib.sha256((password + salt).encode()).hexdigest()
     
     def verify_password(self, password: str, hash_value: str, salt: str) -> bool:
+        """Verify password against hash"""
         return self.hash_password(password, salt) == hash_value
     
     def login(self, username: str, password: str) -> Tuple[bool, Optional[Dict], str]:
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
+        """Authenticate user with improved error handling"""
+        if not username or not password:
+            return False, None, "Username and password are required"
         
-        cursor.execute("""
-            SELECT id, username, email, password_hash, salt, first_name, last_name, role,
-                   department, is_active
-            FROM users WHERE username = ? AND is_active = 1
-        """, (username,))
-        
-        user = cursor.fetchone()
-        
-        if not user:
-            conn.close()
-            return False, None, "Invalid username or password"
-        
-        if not self.verify_password(password, user[3], user[4]):
-            conn.close()
-            return False, None, "Invalid username or password"
-        
-        # Update last login
-        cursor.execute("""
-            UPDATE users SET last_login_date = ? WHERE id = ?
-        """, (datetime.now().isoformat(), user[0]))
-        
-        user_data = {
-            'id': user[0],
-            'username': user[1],
-            'email': user[2],
-            'first_name': user[5],
-            'last_name': user[6],
-            'full_name': f"{user[5]} {user[6]}".strip(),
-            'role': user[7],
-            'department': user[8],
-            'permissions': self.get_user_permissions(user[7])
-        }
-        
-        conn.commit()
-        conn.close()
-        
-        return True, user_data, ""
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, username, email, password_hash, salt, first_name, last_name, role,
+                           department, is_active
+                    FROM users WHERE username = ? AND is_active = 1
+                """, (username,))
+                
+                user = cursor.fetchone()
+                
+                if not user:
+                    conn.close()
+                    return False, None, "Invalid username or password"
+                
+                if not self.verify_password(password, user[3], user[4]):
+                    conn.close()
+                    return False, None, "Invalid username or password"
+                
+                # Update last login
+                cursor.execute("""
+                    UPDATE users SET last_login_date = ? WHERE id = ?
+                """, (datetime.now().isoformat(), user[0]))
+                
+                user_data = {
+                    'id': user[0],
+                    'username': user[1],
+                    'email': user[2],
+                    'first_name': user[5],
+                    'last_name': user[6],
+                    'full_name': f"{user[5]} {user[6]}".strip(),
+                    'role': user[7],
+                    'department': user[8],
+                    'permissions': self.get_user_permissions(user[7])
+                }
+                
+                conn.commit()
+                conn.close()
+                
+                return True, user_data, ""
+                
+            except Exception as e:
+                return False, None, f"Authentication error: {str(e)}"
     
     def get_user_permissions(self, role: str) -> Dict[str, bool]:
         """Define role-based permissions"""
@@ -467,60 +503,66 @@ class AuthService:
         
         return permissions.get(role, permissions['User'])
 
-# Professional Ticket Service
+# Professional Ticket Service with improved error handling
 class TicketService:
     def __init__(self, db_manager):
         self.db = db_manager
     
     def get_all_tickets(self, user_id: int, role: str, user_name: str) -> List[Dict]:
-        """Get tickets based on user permissions"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        if role in ['Admin', 'Manager', 'Agent']:
-            # Can see all tickets
-            cursor.execute("""
-                SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                       created_date, updated_date, due_date, reporter, resolution, tags,
-                       estimated_hours, actual_hours
-                FROM tickets ORDER BY created_date DESC
-            """)
-        else:
-            # Users can only see tickets they created or are assigned to
-            cursor.execute("""
-                SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                       created_date, updated_date, due_date, reporter, resolution, tags,
-                       estimated_hours, actual_hours
-                FROM tickets 
-                WHERE reporter = ? OR assigned_to = ?
-                ORDER BY created_date DESC
-            """, (user_name, user_name))
-        
-        tickets = []
-        for row in cursor.fetchall():
-            ticket = {
-                'id': row[0],
-                'title': row[1],
-                'description': row[2],
-                'priority': row[3],
-                'status': row[4],
-                'assigned_to': row[5] or 'Unassigned',
-                'category': row[6],
-                'subcategory': row[7],
-                'created_date': row[8],
-                'updated_date': row[9],
-                'due_date': row[10],
-                'reporter': row[11] or 'Unknown',
-                'resolution': row[12],
-                'tags': row[13],
-                'estimated_hours': row[14],
-                'actual_hours': row[15],
-                'is_overdue': self.is_ticket_overdue(row[10], row[4])
-            }
-            tickets.append(ticket)
-        
-        conn.close()
-        return tickets
+        """Get tickets based on user permissions with error handling"""
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                if role in ['Admin', 'Manager', 'Agent']:
+                    # Can see all tickets
+                    cursor.execute("""
+                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                               created_date, updated_date, due_date, reporter, resolution, tags,
+                               estimated_hours, actual_hours
+                        FROM tickets ORDER BY created_date DESC
+                    """)
+                else:
+                    # Users can only see tickets they created or are assigned to
+                    cursor.execute("""
+                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                               created_date, updated_date, due_date, reporter, resolution, tags,
+                               estimated_hours, actual_hours
+                        FROM tickets 
+                        WHERE reporter = ? OR assigned_to = ?
+                        ORDER BY created_date DESC
+                    """, (user_name, user_name))
+                
+                tickets = []
+                for row in cursor.fetchall():
+                    ticket = {
+                        'id': row[0],
+                        'title': row[1],
+                        'description': row[2],
+                        'priority': row[3],
+                        'status': row[4],
+                        'assigned_to': row[5] or 'Unassigned',
+                        'category': row[6],
+                        'subcategory': row[7],
+                        'created_date': row[8],
+                        'updated_date': row[9],
+                        'due_date': row[10],
+                        'reporter': row[11] or 'Unknown',
+                        'resolution': row[12],
+                        'tags': row[13],
+                        'estimated_hours': row[14],
+                        'actual_hours': row[15],
+                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                    }
+                    tickets.append(ticket)
+                
+                conn.close()
+                return tickets
+                
+            except Exception as e:
+                st.error(f"Error retrieving tickets: {str(e)}")
+                return []
     
     def is_ticket_overdue(self, due_date: str, status: str) -> bool:
         """Check if ticket is overdue"""
@@ -532,217 +574,65 @@ class TicketService:
         except:
             return False
     
-    def create_ticket(self, ticket_data: Dict, user_name: str) -> int:
-        """Create a new ticket"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        # Calculate due date based on priority
-        hours_map = {'Critical': 4, 'High': 8, 'Medium': 24, 'Low': 72}
-        hours = hours_map.get(ticket_data['priority'], 24)
-        due_date = datetime.now() + timedelta(hours=hours)
-        
-        cursor.execute("""
-            INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                               subcategory, created_date, due_date, reporter, tags, estimated_hours)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            ticket_data['title'],
-            ticket_data['description'],
-            ticket_data['priority'],
-            ticket_data['status'],
-            ticket_data.get('assigned_to', ''),
-            ticket_data['category'],
-            ticket_data.get('subcategory', ''),
-            datetime.now().isoformat(),
-            due_date.isoformat(),
-            user_name,
-            ticket_data.get('tags', ''),
-            ticket_data.get('estimated_hours', 0)
-        ))
-        
-        ticket_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return ticket_id
-    
-    def update_ticket(self, ticket_id: int, ticket_data: Dict) -> bool:
-        """Update a ticket"""
-        try:
-            conn = self.db.get_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                UPDATE tickets SET title=?, description=?, priority=?, status=?, assigned_to=?, 
-                                 category=?, subcategory=?, updated_date=?, resolution=?, tags=?,
-                                 estimated_hours=?, actual_hours=?
-                WHERE id=?
-            """, (
-                ticket_data['title'],
-                ticket_data['description'],
-                ticket_data['priority'],
-                ticket_data['status'],
-                ticket_data.get('assigned_to', ''),
-                ticket_data['category'],
-                ticket_data.get('subcategory', ''),
-                datetime.now().isoformat(),
-                ticket_data.get('resolution', ''),
-                ticket_data.get('tags', ''),
-                ticket_data.get('estimated_hours', 0),
-                ticket_data.get('actual_hours', 0),
-                ticket_id
-            ))
-            
-            conn.commit()
-            conn.close()
-            return True
-        except:
-            return False
-    
-    def add_comment(self, ticket_id: int, user_name: str, comment: str, is_internal: bool = False) -> bool:
-        """Add comment to ticket"""
-        try:
-            conn = self.db.get_connection()
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                INSERT INTO ticket_comments (ticket_id, user_name, comment, is_internal, created_date)
-                VALUES (?, ?, ?, ?, ?)
-            """, (ticket_id, user_name, comment, int(is_internal), datetime.now().isoformat()))
-            
-            conn.commit()
-            conn.close()
-            return True
-        except:
-            return False
-    
-    def get_ticket_comments(self, ticket_id: int, can_view_internal: bool = False) -> List[Dict]:
-        """Get comments for a ticket"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        if can_view_internal:
-            cursor.execute("""
-                SELECT user_name, comment, is_internal, created_date
-                FROM ticket_comments WHERE ticket_id = ?
-                ORDER BY created_date ASC
-            """, (ticket_id,))
-        else:
-            cursor.execute("""
-                SELECT user_name, comment, is_internal, created_date
-                FROM ticket_comments WHERE ticket_id = ? AND is_internal = 0
-                ORDER BY created_date ASC
-            """, (ticket_id,))
-        
-        comments = []
-        for row in cursor.fetchall():
-            comment = {
-                'user_name': row[0],
-                'comment': row[1],
-                'is_internal': bool(row[2]),
-                'created_date': row[3]
-            }
-            comments.append(comment)
-        
-        conn.close()
-        return comments
-    
     def get_ticket_statistics(self, user_id: int, role: str, user_name: str) -> Dict:
         """Get ticket statistics based on user role"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        if role in ['Admin', 'Manager', 'Agent']:
-            cursor.execute("""
-                SELECT status, COUNT(*) as count 
-                FROM tickets 
-                WHERE status != 'Deleted' 
-                GROUP BY status
-            """)
-        else:
-            cursor.execute("""
-                SELECT status, COUNT(*) as count 
-                FROM tickets 
-                WHERE (reporter = ? OR assigned_to = ?) AND status != 'Deleted'
-                GROUP BY status
-            """, (user_name, user_name))
-        
-        stats = {}
-        for row in cursor.fetchall():
-            stats[row[0]] = row[1]
-        
-        # Add overdue count for managers/admins
-        if role in ['Admin', 'Manager']:
-            cursor.execute("""
-                SELECT COUNT(*) FROM tickets 
-                WHERE due_date < ? AND status NOT IN ('Resolved', 'Closed', 'Deleted')
-            """, (datetime.now().isoformat(),))
-            stats['Overdue'] = cursor.fetchone()[0]
-        
-        conn.close()
-        return stats
-    
-    def search_tickets(self, search_term: str, user_id: int, role: str, user_name: str) -> List[Dict]:
-        """Search tickets"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        if role in ['Admin', 'Manager', 'Agent']:
-            cursor.execute("""
-                SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                       created_date, updated_date, due_date, reporter, resolution, tags,
-                       estimated_hours, actual_hours
-                FROM tickets 
-                WHERE (title LIKE ? OR description LIKE ? OR tags LIKE ?)
-                ORDER BY created_date DESC
-            """, (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
-        else:
-            cursor.execute("""
-                SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                       created_date, updated_date, due_date, reporter, resolution, tags,
-                       estimated_hours, actual_hours
-                FROM tickets 
-                WHERE (reporter = ? OR assigned_to = ?) 
-                AND (title LIKE ? OR description LIKE ? OR tags LIKE ?)
-                ORDER BY created_date DESC
-            """, (user_name, user_name, f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
-        
-        tickets = []
-        for row in cursor.fetchall():
-            ticket = {
-                'id': row[0],
-                'title': row[1],
-                'description': row[2],
-                'priority': row[3],
-                'status': row[4],
-                'assigned_to': row[5] or 'Unassigned',
-                'category': row[6],
-                'subcategory': row[7],
-                'created_date': row[8],
-                'updated_date': row[9],
-                'due_date': row[10],
-                'reporter': row[11] or 'Unknown',
-                'resolution': row[12],
-                'tags': row[13],
-                'estimated_hours': row[14],
-                'actual_hours': row[15],
-                'is_overdue': self.is_ticket_overdue(row[10], row[4])
-            }
-            tickets.append(ticket)
-        
-        conn.close()
-        return tickets
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                if role in ['Admin', 'Manager', 'Agent']:
+                    cursor.execute("""
+                        SELECT status, COUNT(*) as count 
+                        FROM tickets 
+                        WHERE status != 'Deleted' 
+                        GROUP BY status
+                    """)
+                else:
+                    cursor.execute("""
+                        SELECT status, COUNT(*) as count 
+                        FROM tickets 
+                        WHERE (reporter = ? OR assigned_to = ?) AND status != 'Deleted'
+                        GROUP BY status
+                    """, (user_name, user_name))
+                
+                stats = {}
+                for row in cursor.fetchall():
+                    stats[row[0]] = row[1]
+                
+                # Add overdue count for managers/admins
+                if role in ['Admin', 'Manager']:
+                    cursor.execute("""
+                        SELECT COUNT(*) FROM tickets 
+                        WHERE due_date < ? AND status NOT IN ('Resolved', 'Closed', 'Deleted')
+                    """, (datetime.now().isoformat(),))
+                    stats['Overdue'] = cursor.fetchone()[0]
+                
+                conn.close()
+                return stats
+                
+            except Exception as e:
+                st.error(f"Error retrieving statistics: {str(e)}")
+                return {}
 
-# Initialize services
-@st.cache_resource
+# Initialize services with better error handling
 def init_services():
-    db_manager = DatabaseManager()
-    auth_service = AuthService(db_manager)
-    ticket_service = TicketService(db_manager)
-    return db_manager, auth_service, ticket_service
+    """Initialize all services with proper error handling"""
+    try:
+        db_manager = DatabaseManager()
+        auth_service = AuthService(db_manager)
+        ticket_service = TicketService(db_manager)
+        return db_manager, auth_service, ticket_service
+    except Exception as e:
+        st.error(f"Failed to initialize services: {str(e)}")
+        st.stop()
 
-db_manager, auth_service, ticket_service = init_services()
+# Initialize services (removed caching to avoid issues)
+try:
+    db_manager, auth_service, ticket_service = init_services()
+except Exception as e:
+    st.error("Application initialization failed. Please refresh the page.")
+    st.stop()
 
 # Initialize session state
 if 'user' not in st.session_state:
@@ -765,26 +655,6 @@ def require_auth(permission: str = None) -> bool:
     return True
 
 # Utility functions
-def get_priority_color(priority: str) -> str:
-    colors = {
-        'Critical': '#dc2626',
-        'High': '#ea580c',
-        'Medium': '#2563eb',
-        'Low': '#059669'
-    }
-    return colors.get(priority, '#6b7280')
-
-def get_status_color(status: str) -> str:
-    colors = {
-        'Open': '#2563eb',
-        'In Progress': '#7c3aed',
-        'Resolved': '#059669',
-        'Closed': '#4b5563',
-        'Deleted': '#dc2626',
-        'On Hold': '#ea580c'
-    }
-    return colors.get(status, '#6b7280')
-
 def format_date(date_str: str) -> str:
     if not date_str:
         return "N/A"
@@ -818,13 +688,16 @@ def show_login_page():
             
             if submitted:
                 if username and password:
-                    success, user, error_msg = auth_service.login(username, password)
-                    if success:
-                        st.session_state.user = user
-                        st.session_state.page = 'dashboard'
-                        st.rerun()
-                    else:
-                        st.error(error_msg)
+                    try:
+                        success, user, error_msg = auth_service.login(username, password)
+                        if success:
+                            st.session_state.user = user
+                            st.session_state.page = 'dashboard'
+                            st.rerun()
+                        else:
+                            st.error(error_msg)
+                    except Exception as e:
+                        st.error(f"Login error: {str(e)}")
                 else:
                     st.error("Please enter both username and password")
         
@@ -996,7 +869,7 @@ def show_tickets_page():
     
     # Get tickets based on search and filter
     if search_term:
-        tickets = ticket_service.search_tickets(search_term, user['id'], user['role'], user_name)
+        tickets = search_tickets(search_term, user['id'], user['role'], user_name)
     else:
         tickets = ticket_service.get_all_tickets(user['id'], user['role'], user_name)
     
@@ -1005,6 +878,63 @@ def show_tickets_page():
     
     # Enhanced ticket display
     display_professional_ticket_list(tickets, user)
+
+def search_tickets(search_term: str, user_id: int, role: str, user_name: str) -> List[Dict]:
+    """Search tickets with error handling"""
+    with db_lock:
+        try:
+            conn = db_manager.get_connection()
+            cursor = conn.cursor()
+            
+            if role in ['Admin', 'Manager', 'Agent']:
+                cursor.execute("""
+                    SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                           created_date, updated_date, due_date, reporter, resolution, tags,
+                           estimated_hours, actual_hours
+                    FROM tickets 
+                    WHERE (title LIKE ? OR description LIKE ? OR tags LIKE ?)
+                    ORDER BY created_date DESC
+                """, (f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
+            else:
+                cursor.execute("""
+                    SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                           created_date, updated_date, due_date, reporter, resolution, tags,
+                           estimated_hours, actual_hours
+                    FROM tickets 
+                    WHERE (reporter = ? OR assigned_to = ?) 
+                    AND (title LIKE ? OR description LIKE ? OR tags LIKE ?)
+                    ORDER BY created_date DESC
+                """, (user_name, user_name, f"%{search_term}%", f"%{search_term}%", f"%{search_term}%"))
+            
+            tickets = []
+            for row in cursor.fetchall():
+                ticket = {
+                    'id': row[0],
+                    'title': row[1],
+                    'description': row[2],
+                    'priority': row[3],
+                    'status': row[4],
+                    'assigned_to': row[5] or 'Unassigned',
+                    'category': row[6],
+                    'subcategory': row[7],
+                    'created_date': row[8],
+                    'updated_date': row[9],
+                    'due_date': row[10],
+                    'reporter': row[11] or 'Unknown',
+                    'resolution': row[12],
+                    'tags': row[13],
+                    'estimated_hours': row[14],
+                    'actual_hours': row[15],
+                    'is_overdue': ticket_service.is_ticket_overdue(row[10], row[4])
+                }
+                tickets.append(ticket)
+            
+            conn.close()
+            return tickets
+            
+        except Exception as e:
+            st.error(f"Error searching tickets: {str(e)}")
+            return []
 
 def display_professional_ticket_list(tickets, user):
     if not tickets:
@@ -1140,22 +1070,72 @@ def show_sidebar():
                 st.session_state.selected_ticket = None
                 st.rerun()
 
+# Placeholder pages for missing functionality
+def show_new_ticket_page():
+    if not require_auth():
+        return
+    
+    st.title("➕ Create New Ticket")
+    st.info("This feature is coming soon! For now, you can view existing tickets.")
+    
+    if st.button("← Back to Tickets"):
+        st.session_state.page = 'tickets'
+        st.rerun()
+
+def show_settings_page():
+    if not require_auth():
+        return
+    
+    st.title("⚙️ Settings")
+    st.info("Settings panel is coming soon! You can currently view and manage tickets.")
+    
+    if st.button("← Back to Dashboard"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
+
+def show_ticket_details_page():
+    if not require_auth():
+        return
+    
+    st.title("🎫 Ticket Details")
+    
+    if st.session_state.selected_ticket:
+        ticket = st.session_state.selected_ticket
+        st.json(ticket)
+    else:
+        st.error("No ticket selected")
+    
+    if st.button("← Back to Tickets"):
+        st.session_state.page = 'tickets'
+        st.rerun()
+
 # Main App Router
 def main():
-    # Show sidebar if user is logged in
-    if st.session_state.user:
-        show_sidebar()
-    
-    # Route to appropriate page
-    if st.session_state.page == 'login':
-        show_login_page()
-    elif st.session_state.page == 'dashboard':
-        show_dashboard()
-    elif st.session_state.page == 'tickets':
-        show_tickets_page()
-    else:
-        st.session_state.page = 'login'
-        st.rerun()
+    try:
+        # Show sidebar if user is logged in
+        if st.session_state.user:
+            show_sidebar()
+        
+        # Route to appropriate page
+        if st.session_state.page == 'login':
+            show_login_page()
+        elif st.session_state.page == 'dashboard':
+            show_dashboard()
+        elif st.session_state.page == 'tickets':
+            show_tickets_page()
+        elif st.session_state.page == 'new_ticket':
+            show_new_ticket_page()
+        elif st.session_state.page == 'settings':
+            show_settings_page()
+        elif st.session_state.page == 'ticket_details':
+            show_ticket_details_page()
+        else:
+            st.session_state.page = 'login'
+            st.rerun()
+            
+    except Exception as e:
+        st.error(f"Application error: {str(e)}")
+        st.info("Please refresh the page to continue.")
 
 if __name__ == "__main__":
     main()
