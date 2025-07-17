@@ -40,8 +40,107 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         transition: all 0.2s ease;
     }
+    .priority-critical {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-high {
+        background: linear-gradient(135deg, #ea580c, #c2410c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-medium {
+        background: linear-gradient(135deg, #ca8a04, #a16207);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-low {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-open {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-in-progress {
+        background: linear-gradient(135deg, #ca8a04, #a16207);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-resolved {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin: 0.5rem 0;
+    }
+    .metric-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
     .user-role-admin {
         background: linear-gradient(135deg, #7c2d12, #ea580c);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-manager {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-agent {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-user {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
         color: white;
         padding: 0.25rem 0.5rem;
         border-radius: 0.5rem;
@@ -57,6 +156,20 @@ st.markdown("""
         font-weight: 600;
         transition: all 0.2s;
         box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    }
+    .overdue-indicator {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.7rem;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -197,8 +310,11 @@ class DatabaseManager:
             ("FlowTLS Integration Critical Error", "System integration completely failing - production down", "Critical", "Open", "John Smith", "Integration", "System Integration", "Sarah Johnson", "urgent,integration,flowtls,production", "CLIENT001"),
             ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department", "CLIENT002"),
             ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
-            ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "FLOWTLS001"),
-            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "FLOWTLS001")
+            ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
+            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002"),
+            ("Server Maintenance Window", "Scheduled maintenance for database servers", "Low", "Open", "John Smith", "Maintenance", "Infrastructure", "Alice Chen", "maintenance,scheduled,database", "CLIENT001"),
+            ("Mobile App Bug Report", "Users reporting crashes on iOS app during login", "High", "In Progress", "Alice Chen", "Bug", "Mobile Application", "Sarah Johnson", "bug,mobile,ios,crash", "CLIENT002"),
+            ("Network Connectivity Issues", "Intermittent connection drops affecting remote users", "Medium", "Open", "John Smith", "Network", "Infrastructure", "System Administrator", "network,connectivity,remote", "CLIENT001")
         ]
         
         for i, (title, desc, priority, status, assigned_to, category, subcategory, reporter, tags, company_id) in enumerate(sample_tickets):
@@ -206,6 +322,7 @@ class DatabaseManager:
                 hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
                 due_date = datetime.now() + timedelta(hours=hours_to_add)
                 
+                # Make some tickets overdue for demonstration
                 if i % 4 == 0 and status in ["Open", "In Progress"]:
                     due_date = datetime.now() - timedelta(hours=2)
                 
@@ -359,6 +476,29 @@ class UserService:
             except Exception as e:
                 st.error(f"Error retrieving companies: {str(e)}")
                 return []
+    
+    def get_company_by_id(self, company_id):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("SELECT company_id, company_name, contact_email, phone, address FROM companies WHERE company_id = ?", (company_id,))
+                row = cursor.fetchone()
+                
+                if row:
+                    company = {
+                        'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
+                        'phone': row[3], 'address': row[4]
+                    }
+                    conn.close()
+                    return company
+                
+                conn.close()
+                return None
+            except Exception as e:
+                st.error(f"Error retrieving company: {str(e)}")
+                return None
 
 class TicketService:
     def __init__(self, db_manager):
@@ -378,7 +518,354 @@ class TicketService:
                         FROM tickets ORDER BY created_date DESC
                     """)
                 else:
-                    cursor.execute("""
+                    st.error("Please enter both username and password")
+        
+        with st.expander("🎭 Demo User Accounts", expanded=True):
+            st.markdown("**Administrator:** `admin` / `admin123` - Full system access  \n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports  \n**Agent:** `achen` / `password123` - Can work on assigned tickets  \n**User:** `sjohnson` / `password123` - Can create and view own tickets")
+
+def show_dashboard():
+    if not require_auth():
+        return
+    
+    user = st.session_state.user
+    st.markdown(f'<div class="main-header"><h1>🎫 FlowTLS SYNC+ Dashboard</h1><p>Welcome back, {user["full_name"]}! | Role: <strong>{user["role"]}</strong> | Department: {user["department"]}</p></div>', unsafe_allow_html=True)
+    
+    # Get tickets for dashboard
+    tickets = ticket_service.get_all_tickets(user['id'], user['permissions'], user['full_name'])
+    
+    # Quick Action Buttons
+    st.subheader("🚀 Quick Actions")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("➕ Create New Ticket", use_container_width=True):
+            st.session_state.page = 'create_ticket'
+            st.rerun()
+    
+    with col2:
+        if st.button("🎫 View All Tickets", use_container_width=True):
+            st.session_state.page = 'tickets'
+            st.rerun()
+    
+    with col3:
+        if user['permissions'].get('can_view_all_tickets', False):
+            if st.button("📊 Analytics", use_container_width=True):
+                st.session_state.page = 'analytics'
+                st.rerun()
+    
+    with col4:
+        if user['permissions'].get('can_create_users', False):
+            if st.button("👥 Manage Users", use_container_width=True):
+                st.session_state.page = 'users'
+                st.rerun()
+    
+    # Dashboard Metrics
+    st.subheader("📈 Dashboard Overview")
+    
+    # Calculate metrics
+    total_tickets = len(tickets)
+    open_tickets = len([t for t in tickets if t['status'] == 'Open'])
+    in_progress_tickets = len([t for t in tickets if t['status'] == 'In Progress'])
+    resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
+    overdue_tickets = len([t for t in tickets if t['is_overdue']])
+    
+    # Metrics cards
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div class="metric-value">{total_tickets}</div>
+            <div class="metric-label">Total Tickets</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
+            <div class="metric-label">Open</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
+            <div class="metric-label">In Progress</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
+            <div class="metric-label">Resolved</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    with col5:
+        st.markdown(f'''
+        <div class="metric-card">
+            <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
+            <div class="metric-label">Overdue</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    # Charts Row
+    if tickets:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("📊 Tickets by Status")
+            status_data = pd.DataFrame(tickets)['status'].value_counts()
+            fig = px.pie(
+                values=status_data.values,
+                names=status_data.index,
+                color_discrete_map={
+                    'Open': '#dc2626',
+                    'In Progress': '#ca8a04',
+                    'Resolved': '#059669',
+                    'Closed': '#6b7280'
+                }
+            )
+            fig.update_layout(height=350)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("📈 Tickets by Priority")
+            priority_data = pd.DataFrame(tickets)['priority'].value_counts()
+            fig = px.bar(
+                x=priority_data.index,
+                y=priority_data.values,
+                color=priority_data.index,
+                color_discrete_map={
+                    'Critical': '#dc2626',
+                    'High': '#ea580c',
+                    'Medium': '#ca8a04',
+                    'Low': '#059669'
+                }
+            )
+            fig.update_layout(height=350, showlegend=False)
+            fig.update_xaxes(title="Priority")
+            fig.update_yaxes(title="Number of Tickets")
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # Recent Tickets
+    st.subheader("🕐 Recent Tickets")
+    if tickets:
+        recent_tickets = sorted(tickets, key=lambda x: x['created_date'], reverse=True)[:5]
+        
+        for ticket in recent_tickets:
+            # Get company details
+            company = user_service.get_company_by_id(ticket['company_id'])
+            company_name = company['company_name'] if company else ticket['company_id']
+            
+            with st.container():
+                st.markdown(f'''
+                <div class="ticket-card">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 style="margin: 0;">#{ticket['id']} - {ticket['title']}</h4>
+                        {'<span class="overdue-indicator">⚠️ OVERDUE</span>' if ticket['is_overdue'] else ''}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span class="priority-{ticket['priority'].lower()}">{ticket['priority']}</span>
+                        <span class="status-{ticket['status'].lower().replace(' ', '-')}">{ticket['status']}</span>
+                    </div>
+                    <p style="margin: 0.5rem 0; color: #6b7280;">{ticket['description'][:100]}{'...' if len(ticket['description']) > 100 else ''}</p>
+                    <div style="display: flex; justify-content: between; align-items: center; font-size: 0.85rem; color: #6b7280;">
+                        <span><strong>Company:</strong> {company_name}</span>
+                        <span><strong>Assigned:</strong> {ticket['assigned_to']}</span>
+                        <span><strong>Due:</strong> {format_date(ticket['due_date'])}</span>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+    else:
+        st.info("No tickets found. Create your first ticket using the button above!")
+
+def show_tickets_page():
+    if not require_auth():
+        return
+    
+    st.title("🎫 Ticket Management")
+    
+    # Get tickets
+    tickets = ticket_service.get_all_tickets(st.session_state.user['id'], 
+                                           st.session_state.user['permissions'], 
+                                           st.session_state.user['full_name'])
+    
+    # Filters
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        status_filter = st.selectbox("Filter by Status", ["All", "Open", "In Progress", "Resolved", "Closed"])
+    with col2:
+        priority_filter = st.selectbox("Filter by Priority", ["All", "Critical", "High", "Medium", "Low"])
+    with col3:
+        company_filter = st.selectbox("Filter by Company", ["All"] + list(set([t['company_id'] for t in tickets])))
+    
+    # Apply filters
+    filtered_tickets = tickets
+    if status_filter != "All":
+        filtered_tickets = [t for t in filtered_tickets if t['status'] == status_filter]
+    if priority_filter != "All":
+        filtered_tickets = [t for t in filtered_tickets if t['priority'] == priority_filter]
+    if company_filter != "All":
+        filtered_tickets = [t for t in filtered_tickets if t['company_id'] == company_filter]
+    
+    st.subheader(f"Showing {len(filtered_tickets)} of {len(tickets)} tickets")
+    
+    # Display tickets
+    for ticket in filtered_tickets:
+        # Get company details
+        company = user_service.get_company_by_id(ticket['company_id'])
+        company_name = company['company_name'] if company else ticket['company_id']
+        
+        with st.container():
+            st.markdown(f'''
+            <div class="ticket-card">
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0;">#{ticket['id']} - {ticket['title']}</h4>
+                    {'<span class="overdue-indicator">⚠️ OVERDUE</span>' if ticket['is_overdue'] else ''}
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <span class="priority-{ticket['priority'].lower()}">{ticket['priority']}</span>
+                    <span class="status-{ticket['status'].lower().replace(' ', '-')}">{ticket['status']}</span>
+                </div>
+                <p style="margin: 0.5rem 0; color: #374151;">{ticket['description']}</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.85rem; color: #6b7280; margin-top: 1rem;">
+                    <div><strong>Company:</strong> {company_name}</div>
+                    <div><strong>Category:</strong> {ticket['category']}</div>
+                    <div><strong>Assigned to:</strong> {ticket['assigned_to']}</div>
+                    <div><strong>Reporter:</strong> {ticket['reporter']}</div>
+                    <div><strong>Created:</strong> {format_date(ticket['created_date'])}</div>
+                    <div><strong>Due:</strong> {format_date(ticket['due_date'])}</div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+
+def show_create_ticket_page():
+    if not require_auth():
+        return
+    
+    st.title("➕ Create New Ticket")
+    
+    # Get companies for dropdown
+    companies = user_service.get_companies()
+    company_options = {comp['company_name']: comp['company_id'] for comp in companies}
+    
+    with st.form("create_ticket_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            title = st.text_input("Ticket Title*", placeholder="Enter a descriptive title")
+            priority = st.selectbox("Priority*", ["Low", "Medium", "High", "Critical"])
+            category = st.selectbox("Category*", ["General", "Bug", "Enhancement", "Security", "Performance", "Integration", "Maintenance"])
+            company_name = st.selectbox("Company*", list(company_options.keys()))
+        
+        with col2:
+            status = st.selectbox("Status*", ["Open", "In Progress"])
+            subcategory = st.text_input("Subcategory", placeholder="Optional subcategory")
+            assigned_to = st.text_input("Assign To", placeholder="Leave blank for unassigned")
+            tags = st.text_input("Tags", placeholder="Comma-separated tags")
+        
+        description = st.text_area("Description*", placeholder="Detailed description of the issue", height=150)
+        
+        submitted = st.form_submit_button("Create Ticket", use_container_width=True)
+        
+        if submitted:
+            if title and description and company_name:
+                ticket_data = {
+                    'title': title,
+                    'description': description,
+                    'priority': priority,
+                    'status': status,
+                    'category': category,
+                    'subcategory': subcategory,
+                    'assigned_to': assigned_to,
+                    'tags': tags,
+                    'company_id': company_options[company_name]
+                }
+                
+                if ticket_service.create_ticket(ticket_data, st.session_state.user['full_name']):
+                    st.success("✅ Ticket created successfully!")
+                    st.balloons()
+                    if st.button("Go to Dashboard"):
+                        st.session_state.page = 'dashboard'
+                        st.rerun()
+                else:
+                    st.error("❌ Failed to create ticket. Please try again.")
+            else:
+                st.error("❌ Please fill in all required fields (marked with *)")
+
+def show_sidebar():
+    with st.sidebar:
+        st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
+        
+        if st.session_state.user:
+            user = st.session_state.user
+            st.markdown(f'''
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <strong>{user["full_name"]}</strong><br>
+                <span class="user-role-{user["role"].lower()}">{user["role"]}</span><br>
+                <small>{user["department"]}</small>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # Navigation buttons
+            if st.button("📊 Dashboard", use_container_width=True):
+                st.session_state.page = 'dashboard'
+                st.rerun()
+            
+            if st.button("🎫 Tickets", use_container_width=True):
+                st.session_state.page = 'tickets'
+                st.rerun()
+            
+            if st.button("➕ Create Ticket", use_container_width=True):
+                st.session_state.page = 'create_ticket'
+                st.rerun()
+            
+            # Admin functions
+            if user['permissions'].get('can_view_all_tickets', False):
+                if st.button("📈 Analytics", use_container_width=True):
+                    st.session_state.page = 'analytics'
+                    st.rerun()
+            
+            if user['permissions'].get('can_create_users', False):
+                if st.button("👥 Users", use_container_width=True):
+                    st.session_state.page = 'users'
+                    st.rerun()
+            
+            st.markdown("---")
+            
+            if st.button("🚪 Logout", use_container_width=True):
+                st.session_state.user = None
+                st.session_state.page = 'login'
+                st.rerun()
+
+def main():
+    try:
+        if st.session_state.user:
+            show_sidebar()
+        
+        if st.session_state.page == 'login':
+            show_login_page()
+        elif st.session_state.page == 'dashboard':
+            show_dashboard()
+        elif st.session_state.page == 'tickets':
+            show_tickets_page()
+        elif st.session_state.page == 'create_ticket':
+            show_create_ticket_page()
+        else:
+            st.session_state.page = 'login'
+            st.rerun()
+    except Exception as e:
+        st.error(f"Application error: {str(e)}")
+        st.info("Please refresh the page to continue.")
+
+if __name__ == "__main__":
+    main()cursor.execute("""
                         SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                                created_date, updated_date, due_date, reporter, resolution, tags,
                                estimated_hours, actual_hours, company_id, source
@@ -412,6 +899,33 @@ class TicketService:
             return due < datetime.now()
         except:
             return False
+    
+    def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
+                due_date = datetime.now() + timedelta(hours=hours_to_add)
+                
+                cursor.execute("""
+                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                       subcategory, created_date, due_date, reporter, tags, company_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                    ticket_data['subcategory'], datetime.now().isoformat(), due_date.isoformat(),
+                    user_name, ticket_data['tags'], ticket_data['company_id']
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True
+            except Exception as e:
+                st.error(f"Error creating ticket: {str(e)}")
+                return False
 
 def init_services():
     try:
@@ -465,6 +979,7 @@ def show_login_page():
             username = st.text_input("Username", placeholder="Enter your username")
             password = st.text_input("Password", type="password", placeholder="Enter your password")
             submitted = st.form_submit_button("Sign In", use_container_width=True)
+            
             if submitted:
                 if username and password:
                     try:
@@ -478,67 +993,3 @@ def show_login_page():
                     except Exception as e:
                         st.error(f"Login error: {str(e)}")
                 else:
-                    st.error("Please enter both username and password")
-        with st.expander("🎭 Demo User Accounts", expanded=True):
-            st.markdown("**Administrator:** `admin` / `admin123` - Full system access  \n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports  \n**Agent:** `achen` / `password123` - Can work on assigned tickets  \n**User:** `sjohnson` / `password123` - Can create and view own tickets")
-
-def show_dashboard():
-    if not require_auth():
-        return
-    user = st.session_state.user
-    st.markdown(f'<div class="main-header"><h1>🎫 FlowTLS SYNC+ Dashboard</h1><p>Welcome back, {user["full_name"]}! | Role: <strong>{user["role"]}</strong> | Department: {user["department"]} | Company: {user["company_id"]}</p></div>', unsafe_allow_html=True)
-    
-    if st.button("🎫 View Tickets", use_container_width=True):
-        st.session_state.page = 'tickets'
-        st.rerun()
-
-def show_tickets_page():
-    if not require_auth():
-        return
-    st.title("🎫 Ticket Management")
-    tickets = ticket_service.get_all_tickets(st.session_state.user['id'], st.session_state.user['permissions'], st.session_state.user['full_name'])
-    
-    for ticket in tickets:
-        st.markdown(f"**#{ticket['id']} - {ticket['title']}**")
-        st.write(f"Priority: {ticket['priority']} | Status: {ticket['status']}")
-        st.write(f"Assigned to: {ticket['assigned_to']} | Company: {ticket['company_id']}")
-        st.write("---")
-
-def show_sidebar():
-    with st.sidebar:
-        st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
-        if st.session_state.user:
-            user = st.session_state.user
-            st.markdown(f'<div style="text-align: center; margin-bottom: 1rem;"><strong>{user["full_name"]}</strong><br><span class="user-role-{user["role"].lower()}">{user["role"]}</span><br><small>{user["department"]} | {user["company_id"]}</small></div>', unsafe_allow_html=True)
-            st.markdown("---")
-            if st.button("📊 Dashboard", use_container_width=True):
-                st.session_state.page = 'dashboard'
-                st.rerun()
-            if st.button("🎫 Tickets", use_container_width=True):
-                st.session_state.page = 'tickets'
-                st.rerun()
-            st.markdown("---")
-            if st.button("🚪 Logout", use_container_width=True):
-                st.session_state.user = None
-                st.session_state.page = 'login'
-                st.rerun()
-
-def main():
-    try:
-        if st.session_state.user:
-            show_sidebar()
-        if st.session_state.page == 'login':
-            show_login_page()
-        elif st.session_state.page == 'dashboard':
-            show_dashboard()
-        elif st.session_state.page == 'tickets':
-            show_tickets_page()
-        else:
-            st.session_state.page = 'login'
-            st.rerun()
-    except Exception as e:
-        st.error(f"Application error: {str(e)}")
-        st.info("Please refresh the page to continue.")
-
-if __name__ == "__main__":
-    main()
