@@ -1,38 +1,4 @@
-cursor.execute("""
-                    UPDATE users SET first_name = ?, last_name = ?, role = ?, department = ?,
-                                   phone = ?, company_id = ?, can_create_users = ?, 
-                                   can_deactivate_users = ?, can_reset_passwords = ?,
-                                   can_manage_tickets = ?, can_view_all_tickets = ?,
-                                   can_delete_tickets = ?, can_export_data = ?
-                    WHERE id = ?
-                """, (
-                    user_data['first_name'], user_data['last_name'], user_data['role'],
-                    user_data['department'], user_data['phone'], user_data['company_id'],
-                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
-                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
-                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
-                    user_data.get('can_export_data', 0), user_id
-                ))
-                
-                conn.commit()
-                conn.close()
-                return True, "User updated successfully"
-            except Exception as e:
-                return False, f"Error updating user: {str(e)}"
-    
-    def reset_password(self, user_id: int, new_password: str) -> Tuple[bool, str]:
-        with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                salt = secrets.token_hex(32)
-                password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
-                
-                cursor.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?", 
-                             (password_hash, salt, user_id))
-                
-                conn.commit()
+conn.commit()
                 conn.close()
                 return True, "Password reset successfully"
             except Exception as e:
@@ -369,148 +335,6 @@ def show_create_ticket_page():
     
     companies = user_service.get_companies()
     company_options = {comp['company_name']: comp['company_id'] for comp in companies}
-    current_company_name = next((name for name, id in company_options.items() if id == user_to_edit['company_id']), list(company_options.keys())[0])
-    
-    with st.form("edit_user_form"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            first_name = st.text_input("First Name*", value=user_to_edit['first_name'])
-            last_name = st.text_input("Last Name*", value=user_to_edit['last_name'])
-            role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"], index=["User", "Agent", "Manager", "Admin"].index(user_to_edit['role']))
-            department = st.text_input("Department", value=user_to_edit['department'])
-        
-        with col2:
-            phone = st.text_input("Phone", value=user_to_edit.get('phone', ''))
-            company_name = st.selectbox("Company*", list(company_options.keys()), index=list(company_options.keys()).index(current_company_name))
-        
-        st.subheader("Permissions")
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            can_create_users = st.checkbox("Create Users", value=user_to_edit['permissions']['can_create_users'])
-            can_deactivate_users = st.checkbox("Deactivate Users", value=user_to_edit['permissions']['can_deactivate_users'])
-        
-        with col2:
-            can_reset_passwords = st.checkbox("Reset Passwords", value=user_to_edit['permissions']['can_reset_passwords'])
-            can_manage_tickets = st.checkbox("Manage Tickets", value=user_to_edit['permissions']['can_manage_tickets'])
-        
-        with col3:
-            can_view_all_tickets = st.checkbox("View All Tickets", value=user_to_edit['permissions']['can_view_all_tickets'])
-            can_delete_tickets = st.checkbox("Delete Tickets", value=user_to_edit['permissions']['can_delete_tickets'])
-        
-        with col4:
-            can_export_data = st.checkbox("Export Data", value=user_to_edit['permissions']['can_export_data'])
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            submitted = st.form_submit_button("Update User", use_container_width=True)
-        with col2:
-            cancelled = st.form_submit_button("Cancel", use_container_width=True)
-        
-        if submitted:
-            if first_name and last_name and company_name:
-                user_data = {
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'role': role,
-                    'department': department,
-                    'phone': phone,
-                    'company_id': company_options[company_name],
-                    'can_create_users': can_create_users,
-                    'can_deactivate_users': can_deactivate_users,
-                    'can_reset_passwords': can_reset_passwords,
-                    'can_manage_tickets': can_manage_tickets,
-                    'can_view_all_tickets': can_view_all_tickets,
-                    'can_delete_tickets': can_delete_tickets,
-                    'can_export_data': can_export_data
-                }
-                
-                success, message = user_management_service.update_user(user_to_edit['id'], user_data)
-                if success:
-                    st.success("✅ User updated successfully!")
-                    st.session_state.page = 'users'
-                    st.rerun()
-                else:
-                    st.error(f"❌ {message}")
-            else:
-                st.error("❌ Please fill in all required fields")
-        
-        if cancelled:
-            st.session_state.page = 'users'
-            st.rerun()
-
-def show_sidebar():
-    with st.sidebar:
-        st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
-        
-        if st.session_state.user:
-            user = st.session_state.user
-            st.markdown(f'''
-            <div style="text-align: center; margin-bottom: 1rem;">
-                <strong>{user["full_name"]}</strong><br>
-                <span class="user-role-{user["role"].lower()}">{user["role"]}</span><br>
-                <small>{user["department"]}</small>
-            </div>
-            ''', unsafe_allow_html=True)
-            
-            st.markdown("---")
-            
-            if st.button("📊 Dashboard", use_container_width=True):
-                st.session_state.page = 'dashboard'
-                st.rerun()
-            
-            if st.button("🎫 Tickets", use_container_width=True):
-                st.session_state.page = 'tickets'
-                st.rerun()
-            
-            if st.button("➕ Create Ticket", use_container_width=True):
-                st.session_state.page = 'create_ticket'
-                st.rerun()
-            
-            if user['permissions'].get('can_view_all_tickets', False):
-                if st.button("📈 Analytics", use_container_width=True):
-                    st.session_state.page = 'analytics'
-                    st.rerun()
-            
-            if user['permissions'].get('can_create_users', False):
-                if st.button("👥 Users", use_container_width=True):
-                    st.session_state.page = 'users'
-                    st.rerun()
-            
-            st.markdown("---")
-            
-            if st.button("🚪 Logout", use_container_width=True):
-                st.session_state.user = None
-                st.session_state.page = 'login'
-                st.rerun()
-
-def main():
-    try:
-        if st.session_state.user:
-            show_sidebar()
-        
-        if st.session_state.page == 'login':
-            show_login_page()
-        elif st.session_state.page == 'dashboard':
-            show_dashboard()
-        elif st.session_state.page == 'tickets':
-            show_tickets_page()
-        elif st.session_state.page == 'create_ticket':
-            show_create_ticket_page()
-        elif st.session_state.page == 'users':
-            show_users_page()
-        elif st.session_state.page == 'edit_user':
-            show_edit_user_page()
-        else:
-            st.session_state.page = 'login'
-            st.rerun()
-    except Exception as e:
-        st.error(f"Application error: {str(e)}")
-        st.info("Please refresh the page to continue.")
-
-if __name__ == "__main__":
-    main() in companies}
     
     with st.form("create_ticket_form"):
         col1, col2 = st.columns(2)
@@ -637,7 +461,7 @@ def show_users_page():
                 else:
                     st.write("*No special permissions*")
                 
-                col1, col2, col3, col4, col5 = st.columns(5)
+                col1, col2, col3 = st.columns(3)
                 with col1:
                     if st.button(f"✏️ Edit", key=f"edit_{user['id']}"):
                         st.session_state.edit_user_id = user['id']
@@ -645,11 +469,6 @@ def show_users_page():
                         st.rerun()
                 
                 with col2:
-                    if st.button(f"🔑 Reset Password", key=f"reset_{user['id']}"):
-                        st.session_state.reset_user_id = user['id']
-                        st.session_state.show_reset_modal = True
-                
-                with col3:
                     if user['is_active']:
                         if st.button(f"🚫 Deactivate", key=f"deactivate_{user['id']}"):
                             success, message = user_management_service.deactivate_user(user['id'])
@@ -667,33 +486,19 @@ def show_users_page():
                             else:
                                 st.error(message)
                 
-                if st.session_state.get('show_reset_modal') and st.session_state.get('reset_user_id') == user['id']:
-                    with st.container():
-                        st.markdown("---")
-                        st.subheader(f"Reset Password for {user['full_name']}")
+                with col3:
+                    if st.button(f"🔑 Reset Password", key=f"reset_{user['id']}"):
                         new_password = st.text_input("New Password", type="password", key=f"new_pwd_{user['id']}")
-                        confirm_password = st.text_input("Confirm Password", type="password", key=f"confirm_pwd_{user['id']}")
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button("Reset Password", key=f"confirm_reset_{user['id']}"):
-                                if new_password and new_password == confirm_password:
-                                    success, message = user_management_service.reset_password(user['id'], new_password)
-                                    if success:
-                                        st.success(message)
-                                        st.session_state.show_reset_modal = False
-                                        st.session_state.reset_user_id = None
-                                        st.rerun()
-                                    else:
-                                        st.error(message)
+                        if st.button("Confirm Reset", key=f"confirm_reset_{user['id']}"):
+                            if new_password:
+                                success, message = user_management_service.reset_password(user['id'], new_password)
+                                if success:
+                                    st.success(message)
+                                    st.rerun()
                                 else:
-                                    st.error("Passwords don't match or are empty")
-                        
-                        with col2:
-                            if st.button("Cancel", key=f"cancel_reset_{user['id']}"):
-                                st.session_state.show_reset_modal = False
-                                st.session_state.reset_user_id = None
-                                st.rerun()
+                                    st.error(message)
+                            else:
+                                st.error("Please enter a new password")
                 
                 st.markdown("---")
     
@@ -788,16 +593,63 @@ def show_edit_user_page():
     st.subheader(f"Editing: {user_to_edit['full_name']}")
     
     companies = user_service.get_companies()
-    company_options = {comp['company_name']: comp['company_id'] for compimport streamlit as st
+    company_options = {comp['company_name']: comp['company_id'] for comp in companies}
+    current_company_name = next((name for name, id in company_options.items() if id == user_to_edit['company_id']), list(company_options.keys())[0])
+    
+    with st.form("edit_user_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            first_name = st.text_input("First Name*", value=user_to_edit['first_name'])
+            last_name = st.text_input("Last Name*", value=user_to_edit['last_name'])
+            role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"], index=["User", "Agent", "Manager", "Admin"].index(user_to_edit['role']))
+            department = st.text_input("Department", value=user_to_edit['department'])
+        
+        with col2:
+            phone = st.text_input("Phone", value=user_to_edit.get('phone', ''))
+            company_name = st.selectbox("Company*", list(company_options.keys()), index=list(company_options.keys()).index(current_company_name))
+        
+        st.subheader("Permissions")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            can_create_users = st.checkbox("Create Users", value=user_to_edit['permissions']['can_create_users'])
+            can_deactivate_users = st.checkbox("Deactivate Users", value=user_to_edit['permissions']['can_deactivate_users'])
+        
+        with col2:
+            can_reset_passwords = st.checkbox("Reset Passwords", value=user_to_edit['permissions']['can_reset_passwords'])
+            can_manage_tickets = st.checkbox("Manage Tickets", value=user_to_edit['permissions']['can_manage_tickets'])
+        
+        with col3:
+            can_view_all_tickets = st.checkbox("View All Tickets", value=user_to_edit['permissions']['can_view_all_tickets'])
+            can_delete_tickets = st.checkbox("Delete Tickets", value=user_to_edit['permissions']['can_delete_tickets'])
+        
+        with col4:
+            can_export_data = st.checkbox("Export Data", value=user_to_edit['permissions']['can_export_data'])
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted = st.form_submit_button("Update User", use_container_width=True)
+        with col2:
+            cancelled = st.form_submit_button("Cancel", use_container_width=True)
+        
+        if submitted:
+            if first_name and last_name and company_name:
+                user_data = {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'role': role,
+                    'department': department,
+                    'phone': phone,
+                    'company_id': company_options[company_name],
+                    'can_create_users': can_create_users,
+                    'can_deactivate_users': can_deactivate_users,
+                    'canimport streamlit as st
 import sqlite3
 import hashlib
 import secrets
 import pandas as pd
 from datetime import datetime, timedelta
-import json
-import os
-import csv
-from io import StringIO
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, List, Optional, Tuple
@@ -819,16 +671,6 @@ st.markdown("""
         margin-bottom: 2rem;
         color: white;
         box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-    }
-    .ticket-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1.25rem;
-        margin: 0.75rem 0;
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        color: #1f2937;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
     }
     .priority-critical {
         background: linear-gradient(135deg, #dc2626, #b91c1c);
@@ -936,16 +778,6 @@ st.markdown("""
         border-radius: 0.5rem;
         font-size: 0.75rem;
         font-weight: bold;
-    }
-    .stButton > button {
-        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     }
     .overdue-indicator {
         background: linear-gradient(135deg, #dc2626, #b91c1c);
@@ -1101,10 +933,7 @@ class DatabaseManager:
             ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department", "CLIENT002"),
             ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
             ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
-            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002"),
-            ("Server Maintenance Window", "Scheduled maintenance for database servers", "Low", "Open", "John Smith", "Maintenance", "Infrastructure", "Alice Chen", "maintenance,scheduled,database", "CLIENT001"),
-            ("Mobile App Bug Report", "Users reporting crashes on iOS app during login", "High", "In Progress", "Alice Chen", "Bug", "Mobile Application", "Sarah Johnson", "bug,mobile,ios,crash", "CLIENT002"),
-            ("Network Connectivity Issues", "Intermittent connection drops affecting remote users", "Medium", "Open", "John Smith", "Network", "Infrastructure", "System Administrator", "network,connectivity,remote", "CLIENT001")
+            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002")
         ]
         
         for i, (title, desc, priority, status, assigned_to, category, subcategory, reporter, tags, company_id) in enumerate(sample_tickets):
@@ -1427,3 +1256,30 @@ class UserManagementService:
                     WHERE id = ?
                 """, (
                     user_data['first_name'], user_data['last_name'], user_data['role'],
+                    user_data['department'], user_data['phone'], user_data['company_id'],
+                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                    user_data.get('can_export_data', 0), user_id
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True, "User updated successfully"
+            except Exception as e:
+                return False, f"Error updating user: {str(e)}"
+    
+    def reset_password(self, user_id: int, new_password: str) -> Tuple[bool, str]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                salt = secrets.token_hex(32)
+                password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
+                
+                cursor.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?", 
+                             (password_hash, salt, user_id))
+                
+                conn.commit()
+                conn.close()
