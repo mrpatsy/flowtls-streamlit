@@ -299,7 +299,7 @@ def show_settings_page():
             st.markdown("### Current Companies")
             for company in companies:
                 status_icon = "🟢" if company['is_active'] else "🔴"
-                st.markdown(f"**{status_icon} {company['company_name']} ({company['company_id']})**\n📧 {company['contact_email']} | 📞 {company['phone']}\n📍 {company['address']}")
+                st.markdown(f"**{status_icon} {company['company_name']} ({company['company_id']})**  \n📧 {company['contact_email']} | 📞 {company['phone']}  \n📍 {company['address']}")
         else:
             st.warning("You don't have permission to manage companies.")
     
@@ -439,7 +439,7 @@ def main():
         st.info("Please refresh the page to continue.")
 
 if __name__ == "__main__":
-    main()user:
+    main()session_state.user:
         st.session_state.page = 'login'
         return False
     if permission and not st.session_state.user.get('permissions', {}).get(permission, False):
@@ -491,7 +491,7 @@ def show_login_page():
                 else:
                     st.error("Please enter both username and password")
         with st.expander("🎭 Demo User Accounts", expanded=True):
-            st.markdown("**Administrator:** `admin` / `admin123` - Full system access\n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports\n**Agent:** `achen` / `password123` - Can work on assigned tickets\n**User:** `sjohnson` / `password123` - Can create and view own tickets\n\n*Each role has different permissions and access levels*")
+            st.markdown("**Administrator:** `admin` / `admin123` - Full system access  \n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports  \n**Agent:** `achen` / `password123` - Can work on assigned tickets  \n**User:** `sjohnson` / `password123` - Can create and view own tickets  \n\n*Each role has different permissions and access levels*")
 
 def show_dashboard():
     if not require_auth():
@@ -786,7 +786,7 @@ def show_new_user_page():
 def show_edit_user_page():
     if not require_auth('can_create_users'):
         return
-    if not st.session_state.import streamlit as st
+    if not st.import streamlit as st
 import sqlite3
 import hashlib
 import secrets
@@ -1429,4 +1429,4 @@ class UserService:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
                 
-                cursor.execute("SELECT company_id, company_name, contact_email, phone
+                cursor.execute("
