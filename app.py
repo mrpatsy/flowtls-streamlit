@@ -1030,10 +1030,10 @@ def show_create_ticket_page():
                 st.error("❌ Please fill in all required fields (marked with *)")
             if st.session_state.get('ticket_created', False):
         
-        if st.button("🏠 Go to Dashboard", use_container_width=True):
-            st.session_state.page = 'dashboard'
-            st.session_state.ticket_created = False  # Reset the flag
-            st.rerun()
+            if st.button("🏠 Go to Dashboard", use_container_width=True):
+                st.session_state.page = 'dashboard'
+                st.session_state.ticket_created = False  # Reset the flag
+                st.rerun()
 
 def show_users_page():
     if not require_auth('can_create_users'):
