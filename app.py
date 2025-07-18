@@ -1021,9 +1021,7 @@ def show_create_ticket_page():
                 if ticket_service.create_ticket(ticket_data, st.session_state.user['full_name']):
                     st.success("✅ Ticket created successfully!")
                     st.balloons()
-                    if st.button("Go to Dashboard"):
-                        st.session_state.page = 'dashboard'
-                        st.rerun()
+                    st.session_state.ticket_created = True  # ✅ Add this flag
                 else:
                     st.error("❌ Failed to create ticket. Please try again.")
             else:
