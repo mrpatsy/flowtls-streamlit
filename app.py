@@ -1509,3 +1509,641 @@ def main():
 
 if __name__ == "__main__":
     main()import streamlit as st
+import sqlite3
+import hashlib
+import secrets
+import pandas as pd
+from datetime import datetime, timedelta
+import plotly.express as px
+import plotly.graph_objects as go
+from typing import Dict, List, Optional, Tuple
+import threading
+
+st.set_page_config(
+    page_title="FlowTLS SYNC+ Professional",
+    page_icon="🎫",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+st.markdown("""
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+        padding: 1.5rem 2rem;
+        border-radius: 0.75rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+    .priority-critical {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-high {
+        background: linear-gradient(135deg, #ea580c, #c2410c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-medium {
+        background: linear-gradient(135deg, #ca8a04, #a16207);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .priority-low {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-open {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-in-progress {
+        background: linear-gradient(135deg, #ca8a04, #a16207);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .status-resolved {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin: 0.5rem 0;
+    }
+    .metric-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .user-role-admin {
+        background: linear-gradient(135deg, #7c2d12, #ea580c);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-manager {
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-agent {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-role-user {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .overdue-indicator {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.7rem;
+        font-weight: bold;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+db_lock = threading.Lock()
+
+class DatabaseManager:
+    def __init__(self, db_path="flowtls_professional.db"):
+        self.db_path = db_path
+        self._init_database()
+    
+    def get_connection(self):
+        try:
+            conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=20.0, isolation_level=None)
+            conn.execute("PRAGMA journal_mode=WAL")
+            return conn
+        except Exception as e:
+            st.error(f"Database connection error: {str(e)}")
+            raise
+    
+    def _init_database(self):
+        with db_lock:
+            try:
+                conn = self.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.executescript("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        salt TEXT NOT NULL,
+                        first_name TEXT NOT NULL,
+                        last_name TEXT NOT NULL,
+                        role TEXT DEFAULT 'User',
+                        department TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        company_id TEXT DEFAULT '',
+                        is_active INTEGER DEFAULT 1,
+                        created_date TEXT NOT NULL,
+                        last_login_date TEXT,
+                        created_by TEXT DEFAULT '',
+                        can_create_users INTEGER DEFAULT 0,
+                        can_deactivate_users INTEGER DEFAULT 0,
+                        can_reset_passwords INTEGER DEFAULT 0,
+                        can_manage_tickets INTEGER DEFAULT 0,
+                        can_view_all_tickets INTEGER DEFAULT 0,
+                        can_delete_tickets INTEGER DEFAULT 0,
+                        can_export_data INTEGER DEFAULT 0
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS tickets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        priority TEXT DEFAULT 'Medium',
+                        status TEXT DEFAULT 'Open',
+                        assigned_to TEXT DEFAULT '',
+                        category TEXT DEFAULT 'General',
+                        subcategory TEXT DEFAULT '',
+                        created_date TEXT NOT NULL,
+                        updated_date TEXT,
+                        due_date TEXT,
+                        reporter TEXT DEFAULT '',
+                        resolution TEXT DEFAULT '',
+                        tags TEXT DEFAULT '',
+                        estimated_hours REAL DEFAULT 0,
+                        actual_hours REAL DEFAULT 0,
+                        company_id TEXT DEFAULT '',
+                        source TEXT DEFAULT 'Manual'
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS companies (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_id TEXT UNIQUE NOT NULL,
+                        company_name TEXT NOT NULL,
+                        contact_email TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        address TEXT DEFAULT '',
+                        is_active INTEGER DEFAULT 1,
+                        created_date TEXT NOT NULL
+                    );
+                """)
+                
+                cursor.execute("SELECT COUNT(*) FROM users")
+                if cursor.fetchone()[0] == 0:
+                    self._create_default_users(cursor)
+                
+                cursor.execute("SELECT COUNT(*) FROM tickets")
+                if cursor.fetchone()[0] == 0:
+                    self._create_sample_tickets(cursor)
+                
+                cursor.execute("SELECT COUNT(*) FROM companies")
+                if cursor.fetchone()[0] == 0:
+                    self._create_sample_companies(cursor)
+                
+                conn.commit()
+                conn.close()
+                
+            except Exception as e:
+                st.error(f"Database initialization error: {str(e)}")
+                raise
+    
+    def _create_default_users(self, cursor):
+        users = [
+            ('admin', 'admin@flowtls.com', 'admin123', 'System', 'Administrator', 'Admin', 'IT', '+1-555-0001', 'FLOWTLS001', 1, 1, 1, 1, 1, 1, 1),
+            ('jsmith', 'john.smith@flowtls.com', 'password123', 'John', 'Smith', 'Manager', 'Support', '+1-555-0002', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 1),
+            ('achen', 'alice.chen@flowtls.com', 'password123', 'Alice', 'Chen', 'Agent', 'Technical', '+1-555-0003', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 0),
+            ('sjohnson', 'sarah.johnson@flowtls.com', 'password123', 'Sarah', 'Johnson', 'User', 'Operations', '+1-555-0005', 'CLIENT001', 0, 0, 0, 0, 0, 0, 0)
+        ]
+        
+        for user_data in users:
+            try:
+                salt = secrets.token_hex(32)
+                password_hash = hashlib.sha256((user_data[2] + salt).encode()).hexdigest()
+                
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
+                                     role, department, phone, company_id, created_date, created_by,
+                                     can_create_users, can_deactivate_users, can_reset_passwords,
+                                     can_manage_tickets, can_view_all_tickets, can_delete_tickets,
+                                     can_export_data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    user_data[0], user_data[1], password_hash, salt,
+                    user_data[3], user_data[4], user_data[5],
+                    user_data[6], user_data[7], user_data[8],
+                    datetime.now().isoformat(), 'System',
+                    user_data[9], user_data[10], user_data[11], user_data[12],
+                    user_data[13], user_data[14], user_data[15]
+                ))
+            except Exception as e:
+                st.error(f"Error creating user {user_data[0]}: {str(e)}")
+    
+    def _create_sample_tickets(self, cursor):
+        sample_tickets = [
+            ("FlowTLS Integration Critical Error", "System integration completely failing - production down", "Critical", "Open", "John Smith", "Integration", "System Integration", "Sarah Johnson", "urgent,integration,flowtls,production", "CLIENT001"),
+            ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department", "CLIENT002"),
+            ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
+            ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
+            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002")
+        ]
+        
+        for i, (title, desc, priority, status, assigned_to, category, subcategory, reporter, tags, company_id) in enumerate(sample_tickets):
+            try:
+                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
+                due_date = datetime.now() + timedelta(hours=hours_to_add)
+                
+                if i % 4 == 0 and status in ["Open", "In Progress"]:
+                    due_date = datetime.now() - timedelta(hours=2)
+                
+                cursor.execute("""
+                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                       subcategory, created_date, due_date, reporter, tags, company_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (title, desc, priority, status, assigned_to, category, subcategory, 
+                      (datetime.now() - timedelta(days=i)).isoformat(), due_date.isoformat(), 
+                      reporter, tags, company_id))
+            except Exception as e:
+                st.error(f"Error creating sample ticket {i}: {str(e)}")
+    
+    def _create_sample_companies(self, cursor):
+        companies = [
+            ("FLOWTLS001", "FlowTLS Internal", "admin@flowtls.com", "+1-555-0000", "123 Tech Street, Silicon Valley, CA"),
+            ("CLIENT001", "Acme Corporation", "support@acme.com", "+1-555-1000", "456 Business Ave, New York, NY"),
+            ("CLIENT002", "TechStart Inc", "help@techstart.com", "+1-555-2000", "789 Innovation Dr, Austin, TX")
+        ]
+        
+        for company_id, name, email, phone, address in companies:
+            try:
+                cursor.execute("""
+                    INSERT INTO companies (company_id, company_name, contact_email, phone, address, created_date)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (company_id, name, email, phone, address, datetime.now().isoformat()))
+            except Exception as e:
+                st.error(f"Error creating company {company_id}: {str(e)}")
+
+
+class AuthService:
+    def __init__(self, db_manager):
+        self.db = db_manager
+    
+    def hash_password(self, password: str, salt: str) -> str:
+        return hashlib.sha256((password + salt).encode()).hexdigest()
+    
+    def verify_password(self, password: str, hash_value: str, salt: str) -> bool:
+        return self.hash_password(password, salt) == hash_value
+    
+    def login(self, username: str, password: str) -> Tuple[bool, Optional[Dict], str]:
+        if not username or not password:
+            return False, None, "Username and password are required"
+        
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, username, email, password_hash, salt, first_name, last_name, role,
+                           department, company_id, is_active, can_create_users, can_deactivate_users,
+                           can_reset_passwords, can_manage_tickets, can_view_all_tickets, 
+                           can_delete_tickets, can_export_data
+                    FROM users WHERE username = ? AND is_active = 1
+                """, (username,))
+                
+                user = cursor.fetchone()
+                
+                if not user:
+                    conn.close()
+                    return False, None, "Invalid username or password"
+                
+                if not self.verify_password(password, user[3], user[4]):
+                    conn.close()
+                    return False, None, "Invalid username or password"
+                
+                cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", (datetime.now().isoformat(), user[0]))
+                
+                user_data = {
+                    'id': user[0], 'username': user[1], 'email': user[2],
+                    'first_name': user[5], 'last_name': user[6], 'full_name': f"{user[5]} {user[6]}".strip(),
+                    'role': user[7], 'department': user[8], 'company_id': user[9],
+                    'permissions': {
+                        'can_create_users': bool(user[11]), 'can_deactivate_users': bool(user[12]),
+                        'can_reset_passwords': bool(user[13]), 'can_manage_tickets': bool(user[14]),
+                        'can_view_all_tickets': bool(user[15]), 'can_delete_tickets': bool(user[16]),
+                        'can_export_data': bool(user[17])
+                    }
+                }
+                
+                conn.commit()
+                conn.close()
+                return True, user_data, ""
+                
+            except Exception as e:
+                return False, None, f"Authentication error: {str(e)}"
+
+
+class UserService:
+    def __init__(self, db_manager):
+        self.db = db_manager
+    
+    def get_all_users(self, include_inactive=False):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                query = """
+                    SELECT id, username, email, first_name, last_name, role, department, 
+                           company_id, is_active, created_date, last_login_date, created_by,
+                           can_create_users, can_deactivate_users, can_reset_passwords,
+                           can_manage_tickets, can_view_all_tickets, can_delete_tickets,
+                           can_export_data, phone
+                    FROM users {} ORDER BY created_date DESC
+                """.format("" if include_inactive else "WHERE is_active = 1")
+                
+                cursor.execute(query)
+                
+                users = []
+                for row in cursor.fetchall():
+                    user = {
+                        'id': row[0], 'username': row[1], 'email': row[2],
+                        'first_name': row[3], 'last_name': row[4], 'full_name': f"{row[3]} {row[4]}".strip(),
+                        'role': row[5], 'department': row[6], 'company_id': row[7],
+                        'is_active': bool(row[8]), 'created_date': row[9], 'last_login_date': row[10],
+                        'created_by': row[11], 'phone': row[19],
+                        'permissions': {
+                            'can_create_users': bool(row[12]), 'can_deactivate_users': bool(row[13]),
+                            'can_reset_passwords': bool(row[14]), 'can_manage_tickets': bool(row[15]),
+                            'can_view_all_tickets': bool(row[16]), 'can_delete_tickets': bool(row[17]),
+                            'can_export_data': bool(row[18])
+                        }
+                    }
+                    users.append(user)
+                
+                conn.close()
+                return users
+                
+            except Exception as e:
+                st.error(f"Error retrieving users: {str(e)}")
+                return []
+    
+    def get_companies(self):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("SELECT company_id, company_name, contact_email, phone, address, is_active FROM companies ORDER BY company_name")
+                
+                companies = []
+                for row in cursor.fetchall():
+                    company = {
+                        'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
+                        'phone': row[3], 'address': row[4], 'is_active': bool(row[5])
+                    }
+                    companies.append(company)
+                
+                conn.close()
+                return companies
+            except Exception as e:
+                st.error(f"Error retrieving companies: {str(e)}")
+                return []
+    
+    def get_company_by_id(self, company_id):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("SELECT company_id, company_name, contact_email, phone, address FROM companies WHERE company_id = ?", (company_id,))
+                row = cursor.fetchone()
+                
+                if row:
+                    company = {
+                        'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
+                        'phone': row[3], 'address': row[4]
+                    }
+                    conn.close()
+                    return company
+                
+                conn.close()
+                return None
+            except Exception as e:
+                st.error(f"Error retrieving company: {str(e)}")
+                return None
+
+
+class TicketService:
+    def __init__(self, db_manager):
+        self.db = db_manager
+    
+    def get_all_tickets(self, user_id: int, permissions: Dict, user_name: str) -> List[Dict]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                if permissions.get('can_view_all_tickets', False):
+                    cursor.execute("""
+                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                               created_date, updated_date, due_date, reporter, resolution, tags,
+                               estimated_hours, actual_hours, company_id, source
+                        FROM tickets ORDER BY created_date DESC
+                    """)
+                else:
+                    cursor.execute("""
+                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                               created_date, updated_date, due_date, reporter, resolution, tags,
+                               estimated_hours, actual_hours, company_id, source
+                        FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
+                    """, (user_name, user_name))
+                
+                tickets = []
+                for row in cursor.fetchall():
+                    ticket = {
+                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
+                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
+                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
+                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
+                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
+                        'company_id': row[16], 'source': row[17],
+                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                    }
+                    tickets.append(ticket)
+                
+                conn.close()
+                return tickets
+            except Exception as e:
+                st.error(f"Error retrieving tickets: {str(e)}")
+                return []
+    
+    def is_ticket_overdue(self, due_date: str, status: str) -> bool:
+        if not due_date or status in ['Resolved', 'Closed']:
+            return False
+        try:
+            due = datetime.fromisoformat(due_date.replace('Z', '+00:00'))
+            return due < datetime.now()
+        except:
+            return False
+    
+    def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
+                due_date = datetime.now() + timedelta(hours=hours_to_add)
+                
+                cursor.execute("""
+                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                       subcategory, created_date, due_date, reporter, tags, company_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                    ticket_data['subcategory'], datetime.now().isoformat(), due_date.isoformat(),
+                    user_name, ticket_data['tags'], ticket_data['company_id']
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True
+            except Exception as e:
+                st.error(f"Error creating ticket: {str(e)}")
+                return False
+
+
+class UserManagementService:
+    def __init__(self, db_manager):
+        self.db = db_manager
+    
+    def create_user(self, user_data: Dict, created_by: str) -> Tuple[bool, str]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?", 
+                             (user_data['username'], user_data['email']))
+                if cursor.fetchone()[0] > 0:
+                    conn.close()
+                    return False, "Username or email already exists"
+                
+                salt = secrets.token_hex(32)
+                password_hash = hashlib.sha256((user_data['password'] + salt).encode()).hexdigest()
+                
+                cursor.execute("""
+                    INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
+                                     role, department, phone, company_id, created_date, created_by,
+                                     can_create_users, can_deactivate_users, can_reset_passwords,
+                                     can_manage_tickets, can_view_all_tickets, can_delete_tickets,
+                                     can_export_data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    user_data['username'], user_data['email'], password_hash, salt,
+                    user_data['first_name'], user_data['last_name'], user_data['role'],
+                    user_data['department'], user_data['phone'], user_data['company_id'],
+                    datetime.now().isoformat(), created_by,
+                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                    user_data.get('can_export_data', 0)
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True, "User created successfully"
+            except Exception as e:
+                return False, f"Error creating user: {str(e)}"
+    
+    def update_user(self, user_id: int, user_data: Dict) -> Tuple[bool, str]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE users SET first_name = ?, last_name = ?, role = ?, department = ?,
+                                   phone = ?, company_id = ?, can_create_users = ?, 
+                                   can_deactivate_users = ?, can_reset_passwords = ?,
+                                   can_manage_tickets = ?, can_view_all_tickets = ?,
+                                   can_delete_tickets = ?, can_export_data = ?
+                    WHERE id = ?
+                """, (
+                    user_data['first_name'], user_data['last_name'], user_data['role'],
+                    user_data['department'], user_data['phone'], user_data['company_id'],
+                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                    user_data.get('can_export_data', 0), user_id
+                ))
+                
+                conn.commit()
+                conn.close()
+                return True, "User updated successfully"
+            except Exception as e:
+                return False, f"Error updating user: {str(e)}"
+    
+    def reset_password(self, user_id: int, new_password: str) -> Tuple[bool, str]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                salt = secrets.token_hex(32)
+                password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
+                
+                cursor.execute("UPDATE users SET password_hash = ?, salt = ?
