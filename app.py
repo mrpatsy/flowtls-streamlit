@@ -222,136 +222,130 @@ class DatabaseManager:
                 cursor = conn.cursor()
                 
                 cursor.executescript("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        salt TEXT NOT NULL,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        role TEXT DEFAULT 'User',
-        department TEXT DEFAULT '',
-        phone TEXT DEFAULT '',
-        company_id TEXT DEFAULT '',
-        is_active INTEGER DEFAULT 1,
-        created_date TEXT NOT NULL,
-        last_login_date TEXT,
-        created_by TEXT DEFAULT '',
-        can_create_users INTEGER DEFAULT 0,
-        can_deactivate_users INTEGER DEFAULT 0,
-        can_reset_passwords INTEGER DEFAULT 0,
-        can_manage_tickets INTEGER DEFAULT 0,
-        can_view_all_tickets INTEGER DEFAULT 0,
-        can_delete_tickets INTEGER DEFAULT 0,
-        can_export_data INTEGER DEFAULT 0,
-        location TEXT DEFAULT ''
-    );
-    
-    CREATE TABLE IF NOT EXISTS tickets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT NOT NULL,
-        priority TEXT DEFAULT 'Medium',
-        status TEXT DEFAULT 'Open',
-        assigned_to TEXT DEFAULT '',
-        category TEXT DEFAULT 'General',
-        subcategory TEXT DEFAULT '',
-        created_date TEXT NOT NULL,
-        updated_date TEXT,
-        due_date TEXT,
-        reporter TEXT DEFAULT '',
-        resolution TEXT DEFAULT '',
-        tags TEXT DEFAULT '',
-        estimated_hours REAL DEFAULT 0,
-        actual_hours REAL DEFAULT 0,
-        company_id TEXT DEFAULT '',
-        source TEXT DEFAULT 'Manual',
-        modified_by TEXT DEFAULT '',
-        last_viewed_by TEXT DEFAULT '',
-        last_viewed_date TEXT,
-        is_locked INTEGER DEFAULT 0,
-        locked_by TEXT DEFAULT '',
-        locked_date TEXT,
-        email_thread_id TEXT DEFAULT '',
-        auto_generated INTEGER DEFAULT 0
-    );
-    
-    CREATE TABLE IF NOT EXISTS ticket_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id INTEGER NOT NULL,
-        action_type TEXT NOT NULL,
-        field_changed TEXT DEFAULT '',
-        old_value TEXT DEFAULT '',
-        new_value TEXT DEFAULT '',
-        comment TEXT DEFAULT '',
-        created_by TEXT NOT NULL,
-        created_date TEXT NOT NULL,
-        session_id TEXT DEFAULT '',
-        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS ticket_updates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ticket_id INTEGER NOT NULL,
-        update_text TEXT NOT NULL,
-        is_internal BOOLEAN DEFAULT 0,
-        created_by TEXT NOT NULL,
-        created_date TEXT NOT NULL,
-        email_sent BOOLEAN DEFAULT 0,
-        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS companies (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        company_id TEXT UNIQUE NOT NULL,
-        company_name TEXT NOT NULL,
-        contact_email TEXT DEFAULT '',
-        phone TEXT DEFAULT '',
-        address TEXT DEFAULT '',
-        is_active INTEGER DEFAULT 1,
-        created_date TEXT NOT NULL,
-        support_email TEXT DEFAULT ''
-    );
-    
-    CREATE TABLE IF NOT EXISTS user_sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        session_id TEXT UNIQUE NOT NULL,
-        login_time TEXT NOT NULL,
-        last_activity TEXT NOT NULL,
-        is_active INTEGER DEFAULT 1,
-        ip_address TEXT DEFAULT '',
-        user_agent TEXT DEFAULT '',
-        FOREIGN KEY (user_id) REFERENCES users (id)
-    );
-    
-    CREATE TABLE IF NOT EXISTS email_integration (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email_address TEXT NOT NULL,
-        ticket_id INTEGER,
-        subject TEXT,
-        body TEXT,
-        received_date TEXT NOT NULL,
-        processed BOOLEAN DEFAULT 0,
-        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-    );
-""")
-
-
-
-# Add indexes for better performance
-cursor.executescript("""
-    CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
-    CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
-    CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
-    CREATE INDEX IF NOT EXISTS idx_tickets_company_id ON tickets(company_id);
-    CREATE INDEX IF NOT EXISTS idx_tickets_created_date ON tickets(created_date);
-    CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id ON ticket_history(ticket_id);
-    CREATE INDEX IF NOT EXISTS idx_ticket_updates_ticket_id ON ticket_updates(ticket_id);
-    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
-""")
-                
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        username TEXT UNIQUE NOT NULL,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        salt TEXT NOT NULL,
+                        first_name TEXT NOT NULL,
+                        last_name TEXT NOT NULL,
+                        role TEXT DEFAULT 'User',
+                        department TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        company_id TEXT DEFAULT '',
+                        is_active INTEGER DEFAULT 1,
+                        created_date TEXT NOT NULL,
+                        last_login_date TEXT,
+                        created_by TEXT DEFAULT '',
+                        can_create_users INTEGER DEFAULT 0,
+                        can_deactivate_users INTEGER DEFAULT 0,
+                        can_reset_passwords INTEGER DEFAULT 0,
+                        can_manage_tickets INTEGER DEFAULT 0,
+                        can_view_all_tickets INTEGER DEFAULT 0,
+                        can_delete_tickets INTEGER DEFAULT 0,
+                        can_export_data INTEGER DEFAULT 0,
+                        location TEXT DEFAULT ''
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS tickets (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        description TEXT NOT NULL,
+                        priority TEXT DEFAULT 'Medium',
+                        status TEXT DEFAULT 'Open',
+                        assigned_to TEXT DEFAULT '',
+                        category TEXT DEFAULT 'General',
+                        subcategory TEXT DEFAULT '',
+                        created_date TEXT NOT NULL,
+                        updated_date TEXT,
+                        due_date TEXT,
+                        reporter TEXT DEFAULT '',
+                        resolution TEXT DEFAULT '',
+                        tags TEXT DEFAULT '',
+                        estimated_hours REAL DEFAULT 0,
+                        actual_hours REAL DEFAULT 0,
+                        company_id TEXT DEFAULT '',
+                        source TEXT DEFAULT 'Manual',
+                        modified_by TEXT DEFAULT '',
+                        last_viewed_by TEXT DEFAULT '',
+                        last_viewed_date TEXT,
+                        is_locked INTEGER DEFAULT 0,
+                        locked_by TEXT DEFAULT '',
+                        locked_date TEXT,
+                        email_thread_id TEXT DEFAULT '',
+                        auto_generated INTEGER DEFAULT 0
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS ticket_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ticket_id INTEGER NOT NULL,
+                        action_type TEXT NOT NULL,
+                        field_changed TEXT DEFAULT '',
+                        old_value TEXT DEFAULT '',
+                        new_value TEXT DEFAULT '',
+                        comment TEXT DEFAULT '',
+                        created_by TEXT NOT NULL,
+                        created_date TEXT NOT NULL,
+                        session_id TEXT DEFAULT '',
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS ticket_updates (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ticket_id INTEGER NOT NULL,
+                        update_text TEXT NOT NULL,
+                        is_internal BOOLEAN DEFAULT 0,
+                        created_by TEXT NOT NULL,
+                        created_date TEXT NOT NULL,
+                        email_sent BOOLEAN DEFAULT 0,
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS companies (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_id TEXT UNIQUE NOT NULL,
+                        company_name TEXT NOT NULL,
+                        contact_email TEXT DEFAULT '',
+                        phone TEXT DEFAULT '',
+                        address TEXT DEFAULT '',
+                        is_active INTEGER DEFAULT 1,
+                        created_date TEXT NOT NULL,
+                        support_email TEXT DEFAULT ''
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS user_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER NOT NULL,
+                        session_id TEXT UNIQUE NOT NULL,
+                        login_time TEXT NOT NULL,
+                        last_activity TEXT NOT NULL,
+                        is_active INTEGER DEFAULT 1,
+                        ip_address TEXT DEFAULT '',
+                        user_agent TEXT DEFAULT '',
+                        FOREIGN KEY (user_id) REFERENCES users (id)
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS email_integration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email_address TEXT NOT NULL,
+                        ticket_id INTEGER,
+                        subject TEXT,
+                        body TEXT,
+                        received_date TEXT NOT NULL,
+                        processed BOOLEAN DEFAULT 0,
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                    );
+                    
+                    CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+                    CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
+                    CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+                    CREATE INDEX IF NOT EXISTS idx_tickets_company_id ON tickets(company_id);
+                    CREATE INDEX IF NOT EXISTS idx_tickets_created_date ON tickets(created_date);
+                    CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id ON ticket_history(ticket_id);
+                    CREATE INDEX IF NOT EXISTS idx_ticket_updates_ticket_id ON ticket_updates(ticket_id);
+                    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+                """)                
                 cursor.execute("SELECT COUNT(*) FROM users")
                 if cursor.fetchone()[0] == 0:
                     self._create_default_users(cursor)
