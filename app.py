@@ -655,7 +655,6 @@ class TicketService:
                 for row in cursor.fetchall():
                     entry = {
                         'id': row[0], 'action_type': row[1], 'field_changed': row[2],
-                        'old_value': row[3], 'new_value': row
                         'old_value': row[3], 'new_value': row[4], 'comment': row[5],
                         'created_by': row[6], 'created_date': row[7]
                     }
