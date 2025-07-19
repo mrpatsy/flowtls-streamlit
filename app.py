@@ -654,7 +654,7 @@ class UserService:
                            can_export_data, phone, location
                     FROM users {} ORDER BY created_date DESC
                 """.format("" if include_inactive else "WHERE is_active = 1")                
-                            cursor.execute(query)
+                 cursor.execute(query)
                 
                 users = []
                 for row in cursor.fetchall():
