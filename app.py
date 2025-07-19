@@ -401,6 +401,22 @@ class DatabaseManager:
                 
             except Exception as e:
                 st.error(f"Error creating sample ticket {i}: {str(e)}")
+                
+    def _create_sample_companies(self, cursor):
+    companies = [
+        ("FLOWTLS001", "FlowTLS Internal", "admin@flowtls.com", "+1-555-0000", "123 Tech Street, Silicon Valley, CA"),
+        ("CLIENT001", "Acme Corporation", "support@acme.com", "+1-555-1000", "456 Business Ave, New York, NY"),
+        ("CLIENT002", "TechStart Inc", "help@techstart.com", "+1-555-2000", "789 Innovation Dr, Austin, TX")
+    ]
+    
+        for company_id, name, email, phone, address in companies:
+            try:
+                cursor.execute("""
+                    INSERT INTO companies (company_id, company_name, contact_email, phone, address, created_date)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (company_id, name, email, phone, address, datetime.now().isoformat()))
+            except Exception as e:
+                st.error(f"Error creating company {company_id}: {str(e)}")
 
 
 class AuthService:
