@@ -356,12 +356,12 @@ class DatabaseManager:
     
     def _create_sample_tickets(self, cursor):
         sample_tickets = [
-        ("FlowTLS Integration Critical Error", "System integration completely failing - production down", "Critical", "Open", "John Smith", "Integration", "System Integration", "Sarah Johnson", "urgent,integration,flowtls,production", "CLIENT001"),
-        ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department", "CLIENT002"),
-        ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
-        ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
-        ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002")
-    ]
+            ("FlowTLS Integration Critical Error", "System integration completely failing - production down", "Critical", "Open", "John Smith", "Integration", "System Integration", "Sarah Johnson", "urgent,integration,flowtls,production", "CLIENT001"),
+            ("User Authentication SSO Issues", "Multiple users unable to login with SSO affecting entire department", "High", "In Progress", "Alice Chen", "Security", "Authentication", "System Administrator", "sso,login,authentication,department", "CLIENT002"),
+            ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
+            ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
+            ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002")
+]
     
     for i in range(len(sample_tickets)):
         ticket = sample_tickets[i]
@@ -384,8 +384,7 @@ class DatabaseManager:
                 due_date = datetime.now() - timedelta(hours=2)
         
             cursor.execute("""
-                INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                   subcategory, created_date, updated_date, due_date, reporter, tags, company_id, modified_by)
+                INSERT INTO tickets (title, description, priority, status, assigned_to, category, subcategory, created_date, updated_date, due_date, reporter, tags, company_id, modified_by)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (title, desc, priority, status, assigned_to, category, subcategory, 
                   (datetime.now() - timedelta(days=i)).isoformat(), 
