@@ -8,6 +8,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, List, Optional, Tuple
 import threading
+import uuid
+import time
 
 st.set_page_config(
     page_title="FlowTLS SYNC+ Professional",
@@ -220,89 +222,135 @@ class DatabaseManager:
                 cursor = conn.cursor()
                 
                 cursor.executescript("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        email TEXT UNIQUE NOT NULL,
-                        password_hash TEXT NOT NULL,
-                        salt TEXT NOT NULL,
-                        first_name TEXT NOT NULL,
-                        last_name TEXT NOT NULL,
-                        role TEXT DEFAULT 'User',
-                        department TEXT DEFAULT '',
-                        phone TEXT DEFAULT '',
-                        company_id TEXT DEFAULT '',
-                        is_active INTEGER DEFAULT 1,
-                        created_date TEXT NOT NULL,
-                        last_login_date TEXT,
-                        created_by TEXT DEFAULT '',
-                        can_create_users INTEGER DEFAULT 0,
-                        can_deactivate_users INTEGER DEFAULT 0,
-                        can_reset_passwords INTEGER DEFAULT 0,
-                        can_manage_tickets INTEGER DEFAULT 0,
-                        can_view_all_tickets INTEGER DEFAULT 0,
-                        can_delete_tickets INTEGER DEFAULT 0,
-                        can_export_data INTEGER DEFAULT 0
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS tickets (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        title TEXT NOT NULL,
-                        description TEXT NOT NULL,
-                        priority TEXT DEFAULT 'Medium',
-                        status TEXT DEFAULT 'Open',
-                        assigned_to TEXT DEFAULT '',
-                        category TEXT DEFAULT 'General',
-                        subcategory TEXT DEFAULT '',
-                        created_date TEXT NOT NULL,
-                        updated_date TEXT,
-                        due_date TEXT,
-                        reporter TEXT DEFAULT '',
-                        resolution TEXT DEFAULT '',
-                        tags TEXT DEFAULT '',
-                        estimated_hours REAL DEFAULT 0,
-                        actual_hours REAL DEFAULT 0,
-                        company_id TEXT DEFAULT '',
-                        source TEXT DEFAULT 'Manual',
-                        modified_by TEXT DEFAULT '',
-                        last_viewed_by TEXT DEFAULT '',
-                        last_viewed_date TEXT
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_history (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ticket_id INTEGER NOT NULL,
-                        action_type TEXT NOT NULL,
-                        field_changed TEXT DEFAULT '',
-                        old_value TEXT DEFAULT '',
-                        new_value TEXT DEFAULT '',
-                        comment TEXT DEFAULT '',
-                        created_by TEXT NOT NULL,
-                        created_date TEXT NOT NULL,
-                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_updates (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ticket_id INTEGER NOT NULL,
-                        update_text TEXT NOT NULL,
-                        is_internal BOOLEAN DEFAULT 0,
-                        created_by TEXT NOT NULL,
-                        created_date TEXT NOT NULL,
-                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS companies (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        company_id TEXT UNIQUE NOT NULL,
-                        company_name TEXT NOT NULL,
-                        contact_email TEXT DEFAULT '',
-                        phone TEXT DEFAULT '',
-                        address TEXT DEFAULT '',
-                        is_active INTEGER DEFAULT 1,
-                        created_date TEXT NOT NULL
-                    );
-                """)
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        role TEXT DEFAULT 'User',
+        department TEXT DEFAULT '',
+        phone TEXT DEFAULT '',
+        company_id TEXT DEFAULT '',
+        is_active INTEGER DEFAULT 1,
+        created_date TEXT NOT NULL,
+        last_login_date TEXT,
+        created_by TEXT DEFAULT '',
+        can_create_users INTEGER DEFAULT 0,
+        can_deactivate_users INTEGER DEFAULT 0,
+        can_reset_passwords INTEGER DEFAULT 0,
+        can_manage_tickets INTEGER DEFAULT 0,
+        can_view_all_tickets INTEGER DEFAULT 0,
+        can_delete_tickets INTEGER DEFAULT 0,
+        can_export_data INTEGER DEFAULT 0,
+        location TEXT DEFAULT ''
+    );
+    
+    CREATE TABLE IF NOT EXISTS tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        priority TEXT DEFAULT 'Medium',
+        status TEXT DEFAULT 'Open',
+        assigned_to TEXT DEFAULT '',
+        category TEXT DEFAULT 'General',
+        subcategory TEXT DEFAULT '',
+        created_date TEXT NOT NULL,
+        updated_date TEXT,
+        due_date TEXT,
+        reporter TEXT DEFAULT '',
+        resolution TEXT DEFAULT '',
+        tags TEXT DEFAULT '',
+        estimated_hours REAL DEFAULT 0,
+        actual_hours REAL DEFAULT 0,
+        company_id TEXT DEFAULT '',
+        source TEXT DEFAULT 'Manual',
+        modified_by TEXT DEFAULT '',
+        last_viewed_by TEXT DEFAULT '',
+        last_viewed_date TEXT,
+        is_locked INTEGER DEFAULT 0,
+        locked_by TEXT DEFAULT '',
+        locked_date TEXT,
+        email_thread_id TEXT DEFAULT '',
+        auto_generated INTEGER DEFAULT 0
+    );
+    
+    CREATE TABLE IF NOT EXISTS ticket_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id INTEGER NOT NULL,
+        action_type TEXT NOT NULL,
+        field_changed TEXT DEFAULT '',
+        old_value TEXT DEFAULT '',
+        new_value TEXT DEFAULT '',
+        comment TEXT DEFAULT '',
+        created_by TEXT NOT NULL,
+        created_date TEXT NOT NULL,
+        session_id TEXT DEFAULT '',
+        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS ticket_updates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id INTEGER NOT NULL,
+        update_text TEXT NOT NULL,
+        is_internal BOOLEAN DEFAULT 0,
+        created_by TEXT NOT NULL,
+        created_date TEXT NOT NULL,
+        email_sent BOOLEAN DEFAULT 0,
+        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS companies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id TEXT UNIQUE NOT NULL,
+        company_name TEXT NOT NULL,
+        contact_email TEXT DEFAULT '',
+        phone TEXT DEFAULT '',
+        address TEXT DEFAULT '',
+        is_active INTEGER DEFAULT 1,
+        created_date TEXT NOT NULL,
+        support_email TEXT DEFAULT ''
+    );
+    
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        session_id TEXT UNIQUE NOT NULL,
+        login_time TEXT NOT NULL,
+        last_activity TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        ip_address TEXT DEFAULT '',
+        user_agent TEXT DEFAULT '',
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    );
+    
+    CREATE TABLE IF NOT EXISTS email_integration (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email_address TEXT NOT NULL,
+        ticket_id INTEGER,
+        subject TEXT,
+        body TEXT,
+        received_date TEXT NOT NULL,
+        processed BOOLEAN DEFAULT 0,
+        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+    );
+""")
+
+
+
+# Add indexes for better performance
+cursor.executescript("""
+    CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+    CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
+    CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+    CREATE INDEX IF NOT EXISTS idx_tickets_company_id ON tickets(company_id);
+    CREATE INDEX IF NOT EXISTS idx_tickets_created_date ON tickets(created_date);
+    CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id ON ticket_history(ticket_id);
+    CREATE INDEX IF NOT EXISTS idx_ticket_updates_ticket_id ON ticket_updates(ticket_id);
+    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+""")
                 
                 cursor.execute("SELECT COUNT(*) FROM users")
                 if cursor.fetchone()[0] == 0:
@@ -325,10 +373,10 @@ class DatabaseManager:
     
     def _create_default_users(self, cursor):
         users = [
-            ('admin', 'admin@flowtls.com', 'admin123', 'System', 'Administrator', 'Admin', 'IT', '+1-555-0001', 'FLOWTLS001', 1, 1, 1, 1, 1, 1, 1),
-            ('jsmith', 'john.smith@flowtls.com', 'password123', 'John', 'Smith', 'Manager', 'Support', '+1-555-0002', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 1),
-            ('achen', 'alice.chen@flowtls.com', 'password123', 'Alice', 'Chen', 'Agent', 'Technical', '+1-555-0003', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 0),
-            ('sjohnson', 'sarah.johnson@flowtls.com', 'password123', 'Sarah', 'Johnson', 'User', 'Operations', '+1-555-0005', 'CLIENT001', 0, 0, 0, 0, 0, 0, 0)
+            ('admin', 'admin@flowtls.com', 'admin123', 'System', 'Administrator', 'Admin', 'IT', '+1-555-0001', 'FLOWTLS001', 1, 1, 1, 1, 1, 1, 1, 'San Francisco, CA'),
+            ('jsmith', 'john.smith@flowtls.com', 'password123', 'John', 'Smith', 'Manager', 'Support', '+1-555-0002', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 1, 'New York, NY'),
+            ('achen', 'alice.chen@flowtls.com', 'password123', 'Alice', 'Chen', 'Agent', 'Technical', '+1-555-0003', 'FLOWTLS001', 0, 0, 0, 1, 1, 0, 0, 'Austin, TX'),
+            ('sjohnson', 'sarah.johnson@flowtls.com', 'password123', 'Sarah', 'Johnson', 'User', 'Operations', '+1-555-0005', 'CLIENT001', 0, 0, 0, 0, 0, 0, 0, 'Denver, CO')
         ]
         
         for user_data in users:
@@ -341,15 +389,15 @@ class DatabaseManager:
                                      role, department, phone, company_id, created_date, created_by,
                                      can_create_users, can_deactivate_users, can_reset_passwords,
                                      can_manage_tickets, can_view_all_tickets, can_delete_tickets,
-                                     can_export_data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     can_export_data, location)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     user_data[0], user_data[1], password_hash, salt,
                     user_data[3], user_data[4], user_data[5],
                     user_data[6], user_data[7], user_data[8],
                     datetime.now().isoformat(), 'System',
                     user_data[9], user_data[10], user_data[11], user_data[12],
-                    user_data[13], user_data[14], user_data[15]
+                    user_data[13], user_data[14], user_data[15], user_data[16]
                 ))
             except Exception as e:
                 st.error(f"Error creating user {user_data[0]}: {str(e)}")
@@ -403,21 +451,98 @@ class DatabaseManager:
                 st.error(f"Error creating sample ticket {i}: {str(e)}")
                 
     def _create_sample_companies(self, cursor):
-    companies = [
-        ("FLOWTLS001", "FlowTLS Internal", "admin@flowtls.com", "+1-555-0000", "123 Tech Street, Silicon Valley, CA"),
-        ("CLIENT001", "Acme Corporation", "support@acme.com", "+1-555-1000", "456 Business Ave, New York, NY"),
-        ("CLIENT002", "TechStart Inc", "help@techstart.com", "+1-555-2000", "789 Innovation Dr, Austin, TX")
-    ]
+        companies = [
+            ("FLOWTLS001", "FlowTLS Internal", "admin@flowtls.com", "+1-555-0000", "123 Tech Street, Silicon Valley, CA", "support@flowtls.com"),
+            ("CLIENT001", "Acme Corporation", "support@acme.com", "+1-555-1000", "456 Business Ave, New York, NY", "tickets@acme.com"),
+            ("CLIENT002", "TechStart Inc", "help@techstart.com", "+1-555-2000", "789 Innovation Dr, Austin, TX", "support@techstart.com")
+        ]
     
-        for company_id, name, email, phone, address in companies:
+        for company_id, name, email, phone, address, support_email in companies:
             try:
                 cursor.execute("""
-                    INSERT INTO companies (company_id, company_name, contact_email, phone, address, created_date)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (company_id, name, email, phone, address, datetime.now().isoformat()))
+                    INSERT INTO companies (company_id, company_name, contact_email, phone, address, created_date, support_email)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (company_id, name, email, phone, address, datetime.now().isoformat(), support_email))
             except Exception as e:
                 st.error(f"Error creating company {company_id}: {str(e)}")
 
+class ConcurrencyManager:
+    def __init__(self, db_manager):
+        self.db = db_manager
+        self.lock_timeout_minutes = 15
+    
+    def acquire_ticket_lock(self, ticket_id: int, user_name: str) -> Tuple[bool, str]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                # Check if ticket is already locked
+                cursor.execute("""
+                    SELECT locked_by, locked_date FROM tickets 
+                    WHERE id = ? AND is_locked = 1
+                """, (ticket_id,))
+                
+                existing_lock = cursor.fetchone()
+                if existing_lock:
+                    locked_by, locked_date = existing_lock
+                    if locked_date:
+                        lock_time = datetime.fromisoformat(locked_date)
+                        if datetime.now() - lock_time < timedelta(minutes=self.lock_timeout_minutes):
+                            if locked_by != user_name:
+                                conn.close()
+                                return False, f"Ticket is being edited by {locked_by}"
+                
+                # Acquire lock
+                cursor.execute("""
+                    UPDATE tickets SET is_locked = 1, locked_by = ?, locked_date = ?
+                    WHERE id = ?
+                """, (user_name, datetime.now().isoformat(), ticket_id))
+                
+                conn.commit()
+                conn.close()
+                return True, "Lock acquired"
+            except Exception as e:
+                return False, f"Error acquiring lock: {str(e)}"
+    
+    def release_ticket_lock(self, ticket_id: int, user_name: str):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE tickets SET is_locked = 0, locked_by = '', locked_date = ''
+                    WHERE id = ? AND locked_by = ?
+                """, (ticket_id, user_name))
+                
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                pass
+    
+    def check_ticket_lock_status(self, ticket_id: int) -> Dict:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT is_locked, locked_by, locked_date FROM tickets WHERE id = ?
+                """, (ticket_id,))
+                
+                result = cursor.fetchone()
+                conn.close()
+                
+                if result:
+                    return {
+                        'is_locked': bool(result[0]),
+                        'locked_by': result[1] or '',
+                        'locked_date': result[2] or ''
+                    }
+                return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
+            except Exception as e:
+                return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
 
 class AuthService:
     def __init__(self, db_manager):
@@ -428,6 +553,40 @@ class AuthService:
     
     def verify_password(self, password: str, hash_value: str, salt: str) -> bool:
         return self.hash_password(password, salt) == hash_value
+    
+    def create_session(self, user_id: int, ip_address: str = "", user_agent: str = "") -> str:
+    session_id = str(uuid.uuid4())
+    
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    INSERT INTO user_sessions (user_id, session_id, login_time, last_activity, ip_address, user_agent)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (user_id, session_id, datetime.now().isoformat(), datetime.now().isoformat(), ip_address, user_agent))
+                
+                conn.commit()
+                conn.close()
+                return session_id
+            except Exception as e:
+                return ""
+
+    def update_session_activity(self, session_id: str):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE user_sessions SET last_activity = ? WHERE session_id = ? AND is_active = 1
+                """, (datetime.now().isoformat(), session_id))
+                
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                pass
     
     def login(self, username: str, password: str) -> Tuple[bool, Optional[Dict], str]:
         if not username or not password:
@@ -442,7 +601,7 @@ class AuthService:
                     SELECT id, username, email, password_hash, salt, first_name, last_name, role,
                            department, company_id, is_active, can_create_users, can_deactivate_users,
                            can_reset_passwords, can_manage_tickets, can_view_all_tickets, 
-                           can_delete_tickets, can_export_data
+                           can_delete_tickets, can_export_data, location
                     FROM users WHERE username = ? AND is_active = 1
                 """, (username,))
                 
@@ -458,10 +617,15 @@ class AuthService:
                 
                 cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", (datetime.now().isoformat(), user[0]))
                 
+                # Create session
+                session_id = self.create_session(user[0])
+
                 user_data = {
                     'id': user[0], 'username': user[1], 'email': user[2],
                     'first_name': user[5], 'last_name': user[6], 'full_name': f"{user[5]} {user[6]}".strip(),
                     'role': user[7], 'department': user[8], 'company_id': user[9],
+                    'location': user[18] or 'Unknown',
+                    'session_id': session_id,
                     'permissions': {
                         'can_create_users': bool(user[11]), 'can_deactivate_users': bool(user[12]),
                         'can_reset_passwords': bool(user[13]), 'can_manage_tickets': bool(user[14]),
@@ -493,11 +657,10 @@ class UserService:
                            company_id, is_active, created_date, last_login_date, created_by,
                            can_create_users, can_deactivate_users, can_reset_passwords,
                            can_manage_tickets, can_view_all_tickets, can_delete_tickets,
-                           can_export_data, phone
+                           can_export_data, phone, location
                     FROM users {} ORDER BY created_date DESC
-                """.format("" if include_inactive else "WHERE is_active = 1")
-                
-                cursor.execute(query)
+                """.format("" if include_inactive else "WHERE is_active = 1")                
+                            cursor.execute(query)
                 
                 users = []
                 for row in cursor.fetchall():
@@ -506,7 +669,8 @@ class UserService:
                         'first_name': row[3], 'last_name': row[4], 'full_name': f"{row[3]} {row[4]}".strip(),
                         'role': row[5], 'department': row[6], 'company_id': row[7],
                         'is_active': bool(row[8]), 'created_date': row[9], 'last_login_date': row[10],
-                        'created_by': row[11], 'phone': row[19],
+                        'created_by': row[11], 'phone': row[19], 
+                        'location': row[20] or 'Unknown',
                         'permissions': {
                             'can_create_users': bool(row[12]), 'can_deactivate_users': bool(row[13]),
                             'can_reset_passwords': bool(row[14]), 'can_manage_tickets': bool(row[15]),
@@ -584,15 +748,17 @@ class TicketService:
                         SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                                created_date, updated_date, due_date, reporter, resolution, tags,
                                estimated_hours, actual_hours, company_id, source, modified_by,
-                               last_viewed_by, last_viewed_date
+                               last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
+                               email_thread_id, auto_generated
                         FROM tickets ORDER BY created_date DESC
-                    """)
+                    """)                
                 else:
                     cursor.execute("""
                         SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                                created_date, updated_date, due_date, reporter, resolution, tags,
                                estimated_hours, actual_hours, company_id, source, modified_by,
-                               last_viewed_by, last_viewed_date
+                               last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
+                               email_thread_id, auto_generated
                         FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
                     """, (user_name, user_name))
                 
@@ -605,7 +771,8 @@ class TicketService:
                         'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
                         'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
                         'company_id': row[16], 'source': row[17], 'modified_by': row[18],
-                        'last_viewed_by': row[19], 'last_viewed_date': row[20],
+                        'last_viewed_by': row[19], 'last_viewed_date': row[20], 'is_locked': bool(row[21]), 'locked_by': row[22] or '', 'locked_date': row[23],
+                        'email_thread_id': row[24] or '', 'auto_generated': bool(row[25]),
                         'is_overdue': self.is_ticket_overdue(row[10], row[4])
                     }
                     tickets.append(ticket)
@@ -981,14 +1148,14 @@ def init_services():
         ticket_service = TicketService(db_manager)
         user_service = UserService(db_manager)
         user_management_service = UserManagementService(db_manager)
-        return db_manager, auth_service, ticket_service, user_service, user_management_service
+        concurrency_manager = ConcurrencyManager(db_manager)
+        return db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
 
-
 try:
-    db_manager, auth_service, ticket_service, user_service, user_management_service = init_services()
+    db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager = init_services()
 except Exception as e:
     st.error("Application initialization failed. Please refresh the page.")
     st.stop()
@@ -1972,10 +2139,6 @@ def show_analytics_page():
     fig.update_layout(height=400)
     st.plotly_chart(fig, use_container_width=True)
 
-
-def show_sidebar():
-    with st.sidebar:
-        st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
 def show_sidebar():
     with st.sidebar:
         st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
