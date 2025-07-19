@@ -361,45 +361,46 @@ class DatabaseManager:
             ("Database Performance Degradation", "Customer reports taking 30+ seconds to load, needs immediate optimization", "High", "Open", "Alice Chen", "Performance", "Database", "John Smith", "performance,database,reports,slow", "CLIENT001"),
             ("UI Modernization Project", "Update interface design to match new corporate brand guidelines", "Medium", "Open", "Alice Chen", "Enhancement", "User Interface", "Sarah Johnson", "ui,enhancement,design,branding", "CLIENT001"),
             ("Email Notification System", "Configure automated email alerts for high priority tickets", "Medium", "Resolved", "John Smith", "Configuration", "Email System", "System Administrator", "email,notifications,alerts", "CLIENT002")
-]
-    
-    for i in range(len(sample_tickets)):
-        ticket = sample_tickets[i]
-        title = ticket[0]
-        desc = ticket[1] 
-        priority = ticket[2]
-        status = ticket[3]
-        assigned_to = ticket[4]
-        category = ticket[5]
-        subcategory = ticket[6]
-        reporter = ticket[7]
-        tags = ticket[8]
-        company_id = ticket[9]
-    
-        try:
-            hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
-            due_date = datetime.now() + timedelta(hours=hours_to_add)
-        
-            if i % 4 == 0 and status in ["Open", "In Progress"]:
-                due_date = datetime.now() - timedelta(hours=2)
-        
+	]
+	
+	for i in range(len(sample_tickets)):
+		ticket = sample_tickets[i]
+		title = ticket[0]
+		desc = ticket[1] 
+		priority = ticket[2]
+		status = ticket[3]
+		assigned_to = ticket[4]
+		category = ticket[5]
+		subcategory = ticket[6]
+		reporter = ticket[7]
+		tags = ticket[8]
+		company_id = ticket[9]
+		
+		try:
+			hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[priority]
+			due_date = datetime.now() + timedelta(hours=hours_to_add)
+			
+			if i % 4 == 0 and status in ["Open", "In Progress"]:
+				due_date = datetime.now() - timedelta(hours=2)
+			
             cursor.execute("""
-                INSERT INTO tickets (title, description, priority, status, assigned_to, category, subcategory, created_date, updated_date, due_date, reporter, tags, company_id, modified_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (title, desc, priority, status, assigned_to, category, subcategory, 
-                  (datetime.now() - timedelta(days=i)).isoformat(), 
-                  (datetime.now() - timedelta(days=i, hours=2)).isoformat(),
-                  due_date.isoformat(), reporter, tags, company_id, 'System'))
-        
-            ticket_id = cursor.lastrowid
-            cursor.execute("""
-                INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
-                VALUES (?, ?, ?, ?, ?)
-            """, (ticket_id, 'Created', f'Ticket created: {title}', 'System', 
-                      (datetime.now() - timedelta(days=i)).isoformat()))
-        
-        except Exception as e:
-            st.error(f"Error creating sample ticket {i}: {str(e)}")
+				INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+							   subcategory, created_date, updated_date, due_date, reporter, tags, company_id, modified_by)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""", (title, desc, priority, status, assigned_to, category, subcategory, 
+				  (datetime.now() - timedelta(days=i)).isoformat(), 
+				  (datetime.now() - timedelta(days=i, hours=2)).isoformat(),
+				  due_date.isoformat(), reporter, tags, company_id, 'System'))
+			
+			ticket_id = cursor.lastrowid
+			cursor.execute("""
+				INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+				VALUES (?, ?, ?, ?, ?)
+			""", (ticket_id, 'Created', f'Ticket created: {title}', 'System', 
+					  (datetime.now() - timedelta(days=i)).isoformat()))
+			
+		except Exception as e:
+			st.error(f"Error creating sample ticket {i}: {str(e)}")
 
 
 class AuthService:
