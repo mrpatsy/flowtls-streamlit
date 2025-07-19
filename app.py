@@ -1199,7 +1199,7 @@ def show_login_page():
             submitted = st.form_submit_button("Sign In", use_container_width=True)
             
             if submitted:
-                 st.write(f"Debug: Form submitted with username: {username}, password length: {len(password) if password else 0}")
+                st.write(f"Debug: Form submitted with username: {username}, password length: {len(password) if password else 0}")
                 if username and password:
                     try:
                         success, user, error_msg = auth_service.login(username, password)
