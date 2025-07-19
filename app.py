@@ -10,7 +10,10 @@ from typing import Dict, List, Optional, Tuple
 import threading
 import uuid
 import time
-
+import os
+if os.path.exists("flowtls_professional.db"):
+    os.remove("flowtls_professional.db")
+    
 st.set_page_config(
     page_title="FlowTLS SYNC+ Professional",
     page_icon="🎫",
