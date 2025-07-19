@@ -82,6 +82,14 @@ st.markdown("""
         font-size: 0.75rem;
         font-weight: bold;
     }
+    .status-closed {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
     .metric-card {
         background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
         border: 1px solid #e5e7eb;
@@ -141,6 +149,45 @@ st.markdown("""
         font-size: 0.7rem;
         font-weight: bold;
         animation: pulse 2s infinite;
+    }
+    .ticket-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .ticket-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+        transform: translateY(-1px);
+    }
+    .history-entry {
+        border-left: 3px solid #3b82f6;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        background: #f8fafc;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+    }
+    .history-timestamp {
+        color: #6b7280;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .history-user {
+        color: #3b82f6;
+        font-weight: 600;
+    }
+    .update-box {
+        background: #f0f9ff;
+        border: 1px solid #0ea5e9;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
     }
     @keyframes pulse {
         0% { opacity: 1; }
@@ -216,7 +263,33 @@ class DatabaseManager:
                         estimated_hours REAL DEFAULT 0,
                         actual_hours REAL DEFAULT 0,
                         company_id TEXT DEFAULT '',
-                        source TEXT DEFAULT 'Manual'
+                        source TEXT DEFAULT 'Manual',
+                        modified_by TEXT DEFAULT '',
+                        last_viewed_by TEXT DEFAULT '',
+                        last_viewed_date TEXT
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS ticket_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ticket_id INTEGER NOT NULL,
+                        action_type TEXT NOT NULL,
+                        field_changed TEXT DEFAULT '',
+                        old_value TEXT DEFAULT '',
+                        new_value TEXT DEFAULT '',
+                        comment TEXT DEFAULT '',
+                        created_by TEXT NOT NULL,
+                        created_date TEXT NOT NULL,
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                    );
+                    
+                    CREATE TABLE IF NOT EXISTS ticket_updates (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        ticket_id INTEGER NOT NULL,
+                        update_text TEXT NOT NULL,
+                        is_internal BOOLEAN DEFAULT 0,
+                        created_by TEXT NOT NULL,
+                        created_date TEXT NOT NULL,
+                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
                     );
                     
                     CREATE TABLE IF NOT EXISTS companies (
@@ -300,11 +373,20 @@ class DatabaseManager:
                 
                 cursor.execute("""
                     INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                       subcategory, created_date, due_date, reporter, tags, company_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       subcategory, created_date, updated_date, due_date, reporter, tags, company_id, modified_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (title, desc, priority, status, assigned_to, category, subcategory, 
-                      (datetime.now() - timedelta(days=i)).isoformat(), due_date.isoformat(), 
-                      reporter, tags, company_id))
+                      (datetime.now() - timedelta(days=i)).isoformat(), 
+                      (datetime.now() - timedelta(days=i, hours=2)).isoformat(),
+                      due_date.isoformat(), reporter, tags, company_id, 'System'))
+                
+                ticket_id = cursor.lastrowid
+                cursor.execute("""
+                    INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ticket_id, 'Created', f'Ticket created: {title}', 'System', 
+                          (datetime.now() - timedelta(days=i)).isoformat()))
+                
             except Exception as e:
                 st.error(f"Error creating sample ticket {i}: {str(e)}")
     
@@ -489,14 +571,16 @@ class TicketService:
                     cursor.execute("""
                         SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                                created_date, updated_date, due_date, reporter, resolution, tags,
-                               estimated_hours, actual_hours, company_id, source
+                               estimated_hours, actual_hours, company_id, source, modified_by,
+                               last_viewed_by, last_viewed_date
                         FROM tickets ORDER BY created_date DESC
                     """)
                 else:
                     cursor.execute("""
                         SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                                created_date, updated_date, due_date, reporter, resolution, tags,
-                               estimated_hours, actual_hours, company_id, source
+                               estimated_hours, actual_hours, company_id, source, modified_by,
+                               last_viewed_by, last_viewed_date
                         FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
                     """, (user_name, user_name))
                 
@@ -508,7 +592,8 @@ class TicketService:
                         'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
                         'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
                         'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
-                        'company_id': row[16], 'source': row[17],
+                        'company_id': row[16], 'source': row[17], 'modified_by': row[18],
+                        'last_viewed_by': row[19], 'last_viewed_date': row[20],
                         'is_overdue': self.is_ticket_overdue(row[10], row[4])
                     }
                     tickets.append(ticket)
@@ -518,6 +603,199 @@ class TicketService:
             except Exception as e:
                 st.error(f"Error retrieving tickets: {str(e)}")
                 return []
+    
+    def get_ticket_by_id(self, ticket_id: int) -> Optional[Dict]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                           created_date, updated_date, due_date, reporter, resolution, tags,
+                           estimated_hours, actual_hours, company_id, source, modified_by,
+                           last_viewed_by, last_viewed_date
+                    FROM tickets WHERE id = ?
+                """, (ticket_id,))
+                
+                row = cursor.fetchone()
+                if row:
+                    ticket = {
+                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
+                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
+                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
+                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
+                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
+                        'company_id': row[16], 'source': row[17], 'modified_by': row[18],
+                        'last_viewed_by': row[19], 'last_viewed_date': row[20],
+                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                    }
+                    conn.close()
+                    return ticket
+                
+                conn.close()
+                return None
+            except Exception as e:
+                st.error(f"Error retrieving ticket: {str(e)}")
+                return None
+    
+    def get_ticket_history(self, ticket_id: int) -> List[Dict]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, action_type, field_changed, old_value, new_value, comment,
+                           created_by, created_date
+                    FROM ticket_history WHERE ticket_id = ? ORDER BY created_date DESC
+                """, (ticket_id,))
+                
+                history = []
+                for row in cursor.fetchall():
+                    entry = {
+                        'id': row[0], 'action_type': row[1], 'field_changed': row[2],
+                        'old_value': row[3], 'new_value': row
+                        'old_value': row[3], 'new_value': row[4], 'comment': row[5],
+                        'created_by': row[6], 'created_date': row[7]
+                    }
+                    history.append(entry)
+                
+                conn.close()
+                return history
+            except Exception as e:
+                st.error(f"Error retrieving ticket history: {str(e)}")
+                return []
+    
+    def get_ticket_updates(self, ticket_id: int) -> List[Dict]:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    SELECT id, update_text, is_internal, created_by, created_date
+                    FROM ticket_updates WHERE ticket_id = ? ORDER BY created_date DESC
+                """, (ticket_id,))
+                
+                updates = []
+                for row in cursor.fetchall():
+                    update = {
+                        'id': row[0], 'update_text': row[1], 'is_internal': bool(row[2]),
+                        'created_by': row[3], 'created_date': row[4]
+                    }
+                    updates.append(update)
+                
+                conn.close()
+                return updates
+            except Exception as e:
+                st.error(f"Error retrieving ticket updates: {str(e)}")
+                return []
+    
+    def update_ticket_last_viewed(self, ticket_id: int, user_name: str):
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    UPDATE tickets SET last_viewed_by = ?, last_viewed_date = ?
+                    WHERE id = ?
+                """, (user_name, datetime.now().isoformat(), ticket_id))
+                
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                st.error(f"Error updating last viewed: {str(e)}")
+    
+    def update_ticket(self, ticket_id: int, ticket_data: Dict, user_name: str) -> bool:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                # Get current ticket data for comparison
+                cursor.execute("""
+                    SELECT title, description, priority, status, assigned_to, category, 
+                           subcategory, tags, estimated_hours, actual_hours, resolution
+                    FROM tickets WHERE id = ?
+                """, (ticket_id,))
+                
+                current_data = cursor.fetchone()
+                if not current_data:
+                    conn.close()
+                    return False
+                
+                current_fields = {
+                    'title': current_data[0], 'description': current_data[1],
+                    'priority': current_data[2], 'status': current_data[3],
+                    'assigned_to': current_data[4], 'category': current_data[5],
+                    'subcategory': current_data[6], 'tags': current_data[7],
+                    'estimated_hours': current_data[8], 'actual_hours': current_data[9],
+                    'resolution': current_data[10]
+                }
+                
+                # Update the ticket
+                cursor.execute("""
+                    UPDATE tickets SET title = ?, description = ?, priority = ?, status = ?,
+                                     assigned_to = ?, category = ?, subcategory = ?, tags = ?,
+                                     estimated_hours = ?, actual_hours = ?, resolution = ?,
+                                     updated_date = ?, modified_by = ?
+                    WHERE id = ?
+                """, (
+                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                    ticket_data['subcategory'], ticket_data['tags'], ticket_data['estimated_hours'],
+                    ticket_data['actual_hours'], ticket_data['resolution'],
+                    datetime.now().isoformat(), user_name, ticket_id
+                ))
+                
+                # Log changes in history
+                for field, new_value in ticket_data.items():
+                    if field in current_fields and str(current_fields[field]) != str(new_value):
+                        cursor.execute("""
+                            INSERT INTO ticket_history (ticket_id, action_type, field_changed,
+                                                       old_value, new_value, created_by, created_date)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """, (ticket_id, 'Updated', field, str(current_fields[field]),
+                              str(new_value), user_name, datetime.now().isoformat()))
+                
+                conn.commit()
+                conn.close()
+                return True
+            except Exception as e:
+                st.error(f"Error updating ticket: {str(e)}")
+                return False
+    
+    def add_ticket_update(self, ticket_id: int, update_text: str, is_internal: bool, user_name: str) -> bool:
+        with db_lock:
+            try:
+                conn = self.db.get_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    INSERT INTO ticket_updates (ticket_id, update_text, is_internal, created_by, created_date)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ticket_id, update_text, is_internal, user_name, datetime.now().isoformat()))
+                
+                # Add to history
+                update_type = "Internal Update" if is_internal else "Public Update"
+                cursor.execute("""
+                    INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ticket_id, update_type, update_text, user_name, datetime.now().isoformat()))
+                
+                # Update ticket's updated_date
+                cursor.execute("""
+                    UPDATE tickets SET updated_date = ?, modified_by = ? WHERE id = ?
+                """, (datetime.now().isoformat(), user_name, ticket_id))
+                
+                conn.commit()
+                conn.close()
+                return True
+            except Exception as e:
+                st.error(f"Error adding ticket update: {str(e)}")
+                return False
     
     def is_ticket_overdue(self, due_date: str, status: str) -> bool:
         if not due_date or status in ['Resolved', 'Closed']:
@@ -539,14 +817,25 @@ class TicketService:
                 
                 cursor.execute("""
                     INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                       subcategory, created_date, due_date, reporter, tags, company_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       subcategory, created_date, updated_date, due_date, reporter, tags, 
+                                       company_id, modified_by)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     ticket_data['title'], ticket_data['description'], ticket_data['priority'],
                     ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
-                    ticket_data['subcategory'], datetime.now().isoformat(), due_date.isoformat(),
-                    user_name, ticket_data['tags'], ticket_data['company_id']
+                    ticket_data['subcategory'], datetime.now().isoformat(), datetime.now().isoformat(),
+                    due_date.isoformat(), user_name, ticket_data['tags'], 
+                    ticket_data['company_id'], user_name
                 ))
+                
+                ticket_id = cursor.lastrowid
+                
+                # Add initial history entry
+                cursor.execute("""
+                    INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (ticket_id, 'Created', f'Ticket created: {ticket_data["title"]}', 
+                      user_name, datetime.now().isoformat()))
                 
                 conn.commit()
                 conn.close()
@@ -697,6 +986,8 @@ if 'user' not in st.session_state:
     st.session_state.user = None
 if 'page' not in st.session_state:
     st.session_state.page = 'login'
+if 'selected_ticket_id' not in st.session_state:
+    st.session_state.selected_ticket_id = None
 
 
 def require_auth(permission: str = None) -> bool:
@@ -888,7 +1179,10 @@ def show_dashboard():
             with st.container():
                 col1, col2 = st.columns([4, 1])
                 with col1:
-                    st.markdown(f"#### #{ticket['id']} - {ticket['title']}")
+                    if st.button(f"#{ticket['id']} - {ticket['title']}", key=f"dash_ticket_{ticket['id']}", use_container_width=True):
+                        st.session_state.selected_ticket_id = ticket['id']
+                        st.session_state.page = 'ticket_detail'
+                        st.rerun()
                 with col2:
                     if ticket['is_overdue']:
                         st.markdown('<span class="overdue-indicator">⚠️ OVERDUE</span>', unsafe_allow_html=True)
@@ -948,9 +1242,14 @@ def show_tickets_page():
         company_name = company['company_name'] if company else ticket['company_id']
         
         with st.container():
+            st.markdown('<div class="ticket-card">', unsafe_allow_html=True)
+            
             col1, col2 = st.columns([4, 1])
             with col1:
-                st.markdown(f"### #{ticket['id']} - {ticket['title']}")
+                if st.button(f"#{ticket['id']} - {ticket['title']}", key=f"ticket_{ticket['id']}", use_container_width=True):
+                    st.session_state.selected_ticket_id = ticket['id']
+                    st.session_state.page = 'ticket_detail'
+                    st.rerun()
             with col2:
                 if ticket['is_overdue']:
                     st.markdown('<span class="overdue-indicator">⚠️ OVERDUE</span>', unsafe_allow_html=True)
@@ -961,7 +1260,12 @@ def show_tickets_page():
             with col2:
                 st.markdown(f'<span class="status-{ticket["status"].lower().replace(" ", "-")}">{ticket["status"]}</span>', unsafe_allow_html=True)
             
-            st.write(ticket['description'])
+            if ticket['last_viewed_by'] and ticket['last_viewed_date']:
+                last_activity = f"Last viewed by {ticket['last_viewed_by']} on {format_date(ticket['last_viewed_date'])}"
+                st.caption(last_activity)
+            
+            description = ticket['description'][:150] + '...' if len(ticket['description']) > 150 else ticket['description']
+            st.write(description)
             
             col1, col2 = st.columns(2)
             with col1:
@@ -973,7 +1277,227 @@ def show_tickets_page():
                 st.write(f"**Reporter:** {ticket['reporter']}")
                 st.write(f"**Due:** {format_date(ticket['due_date'])}")
             
+            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown("---")
+
+
+def show_ticket_detail_page():
+    if not require_auth():
+        return
+    
+    ticket_id = st.session_state.selected_ticket_id
+    if not ticket_id:
+        st.error("No ticket selected")
+        return
+    
+    ticket = ticket_service.get_ticket_by_id(ticket_id)
+    if not ticket:
+        st.error("Ticket not found")
+        return
+    
+    # Update last viewed
+    ticket_service.update_ticket_last_viewed(ticket_id, st.session_state.user['full_name'])
+    
+    # Header with back button
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        if st.button("← Back"):
+            st.session_state.page = 'tickets'
+            st.rerun()
+    with col2:
+        st.title(f"🎫 Ticket #{ticket['id']}")
+    
+    # Ticket header info
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        st.markdown(f"## {ticket['title']}")
+    with col2:
+        st.markdown(f'<span class="priority-{ticket["priority"].lower()}">{ticket["priority"]}</span>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<span class="status-{ticket["status"].lower().replace(" ", "-")}">{ticket["status"]}</span>', unsafe_allow_html=True)
+    
+    if ticket['is_overdue']:
+        st.markdown('<span class="overdue-indicator">⚠️ OVERDUE TICKET</span>', unsafe_allow_html=True)
+    # Tabs for different sections
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Details", "📝 Updates", "📊 History", "✏️ Edit"])
+    
+    with tab1:
+        # Ticket details
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("📄 Basic Information")
+            company = user_service.get_company_by_id(ticket['company_id'])
+            company_name = company['company_name'] if company else ticket['company_id']
+            
+            st.write(f"**Company:** {company_name}")
+            st.write(f"**Category:** {ticket['category']}")
+            st.write(f"**Subcategory:** {ticket['subcategory']}")
+            st.write(f"**Source:** {ticket['source']}")
+            st.write(f"**Tags:** {ticket['tags']}")
+            
+        with col2:
+            st.subheader("👥 Assignment & Timing")
+            st.write(f"**Reporter:** {ticket['reporter']}")
+            st.write(f"**Assigned to:** {ticket['assigned_to']}")
+            st.write(f"**Created:** {format_date(ticket['created_date'])}")
+            st.write(f"**Updated:** {format_date(ticket['updated_date'])}")
+            st.write(f"**Due Date:** {format_date(ticket['due_date'])}")
+            
+        st.subheader("📝 Description")
+        st.write(ticket['description'])
+        
+        if ticket['resolution']:
+            st.subheader("✅ Resolution")
+            st.write(ticket['resolution'])
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Estimated Hours", ticket['estimated_hours'])
+        with col2:
+            st.metric("Actual Hours", ticket['actual_hours'])
+    
+    with tab2:
+        # Updates section
+        st.subheader("💬 Add New Update")
+        
+        with st.form("add_update_form"):
+            update_text = st.text_area("Update", placeholder="Enter update details...", height=100)
+            is_internal = st.checkbox("Internal Update (visible only to staff)")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                submitted = st.form_submit_button("Add Update", use_container_width=True)
+            
+            if submitted and update_text:
+                if ticket_service.add_ticket_update(ticket_id, update_text, is_internal, 
+                                                  st.session_state.user['full_name']):
+                    st.success("Update added successfully!")
+                    st.rerun()
+                else:
+                    st.error("Failed to add update")
+        
+        # Display existing updates
+        st.subheader("📋 Previous Updates")
+        updates = ticket_service.get_ticket_updates(ticket_id)
+        
+        if updates:
+            for update in updates:
+                update_type = "🔒 Internal" if update['is_internal'] else "📢 Public"
+                st.markdown(f"""
+                <div class="update-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span class="history-user">{update['created_by']}</span>
+                        <span style="font-size: 0.8rem;">{update_type} • {format_date(update['created_date'])}</span>
+                    </div>
+                    <div>{update['update_text']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No updates yet.")
+    
+    with tab3:
+        # History section
+        st.subheader("📊 Ticket History")
+        history = ticket_service.get_ticket_history(ticket_id)
+        
+        if history:
+            for entry in history:
+                icon = {
+                    'Created': '🆕',
+                    'Updated': '✏️',
+                    'Public Update': '📢',
+                    'Internal Update': '🔒',
+                    'Status Change': '🔄',
+                    'Assignment': '👤'
+                }.get(entry['action_type'], '📝')
+                
+                change_text = ""
+                if entry['field_changed'] and entry['old_value'] and entry['new_value']:
+                    change_text = f"<br><small><strong>{entry['field_changed']}:</strong> '{entry['old_value']}' → '{entry['new_value']}'</small>"
+                
+                st.markdown(f"""
+                <div class="history-entry">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>{icon} <strong>{entry['action_type']}</strong> by <span class="history-user">{entry['created_by']}</span></span>
+                        <span class="history-timestamp">{format_date(entry['created_date'])}</span>
+                    </div>
+                    {f"<div style='margin-top: 0.5rem;'>{entry['comment']}</div>" if entry['comment'] else ""}
+                    {change_text}
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No history available.")
+    
+    with tab4:
+        # Edit section
+        if not st.session_state.user['permissions'].get('can_manage_tickets', False):
+            st.warning("You don't have permission to edit tickets.")
+        else:
+            st.subheader("✏️ Edit Ticket")
+            
+            companies = user_service.get_companies()
+            company_options = {comp['company_name']: comp['company_id'] for comp in companies}
+            current_company_name = next((name for name, id in company_options.items() 
+                                       if id == ticket['company_id']), list(company_options.keys())[0])
+            
+            with st.form("edit_ticket_form"):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    title = st.text_input("Title", value=ticket['title'])
+                    priority = st.selectbox("Priority", ["Low", "Medium", "High", "Critical"], 
+                                          index=["Low", "Medium", "High", "Critical"].index(ticket['priority']))
+                    status = st.selectbox("Status", ["Open", "In Progress", "Resolved", "Closed"], 
+                                        index=["Open", "In Progress", "Resolved", "Closed"].index(ticket['status']))
+                    category = st.selectbox("Category", 
+                                          ["General", "Bug", "Enhancement", "Security", "Performance", "Integration", "Maintenance"],
+                                          index=["General", "Bug", "Enhancement", "Security", "Performance", "Integration", "Maintenance"].index(ticket['category']) if ticket['category'] in ["General", "Bug", "Enhancement", "Security", "Performance", "Integration", "Maintenance"] else 0)
+                
+                with col2:
+                    assigned_to = st.text_input("Assigned To", value=ticket['assigned_to'])
+                    subcategory = st.text_input("Subcategory", value=ticket['subcategory'])
+                    tags = st.text_input("Tags", value=ticket['tags'])
+                    
+                description = st.text_area("Description", value=ticket['description'], height=100)
+                resolution = st.text_area("Resolution", value=ticket['resolution'], height=80)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    estimated_hours = st.number_input("Estimated Hours", value=float(ticket['estimated_hours']), min_value=0.0, step=0.5)
+                with col2:
+                    actual_hours = st.number_input("Actual Hours", value=float(ticket['actual_hours']), min_value=0.0, step=0.5)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    submitted = st.form_submit_button("Update Ticket", use_container_width=True)
+                with col2:
+                    cancelled = st.form_submit_button("Cancel", use_container_width=True)
+                
+                if submitted:
+                    ticket_data = {
+                        'title': title,
+                        'description': description,
+                        'priority': priority,
+                        'status': status,
+                        'assigned_to': assigned_to,
+                        'category': category,
+                        'subcategory': subcategory,
+                        'tags': tags,
+                        'estimated_hours': estimated_hours,
+                        'actual_hours': actual_hours,
+                        'resolution': resolution
+                    }
+                    
+                    if ticket_service.update_ticket(ticket_id, ticket_data, st.session_state.user['full_name']):
+                        st.success("✅ Ticket updated successfully!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Failed to update ticket")
+                
+                if cancelled:
+                    st.session_state.page = 'tickets'
+                    st.rerun()
 
 
 def show_create_ticket_page():
@@ -1021,16 +1545,18 @@ def show_create_ticket_page():
                 if ticket_service.create_ticket(ticket_data, st.session_state.user['full_name']):
                     st.success("✅ Ticket created successfully!")
                     st.balloons()
-                    st.session_state.ticket_created = True  # ✅ Add this flag
+                    st.session_state.ticket_created = True
                 else:
                     st.error("❌ Failed to create ticket. Please try again.")
             else:
                 st.error("❌ Please fill in all required fields (marked with *)")
-            if st.session_state.get('ticket_created', False):
-                if st.button("🏠 Go to Dashboard", use_container_width=True):
-                    st.session_state.page = 'dashboard'
-                    st.session_state.ticket_created = False  # Reset the flag
-                    st.rerun()
+            
+    if st.session_state.get('ticket_created', False):
+        if st.button("🏠 Go to Dashboard", use_container_width=True):
+            st.session_state.page = 'dashboard'
+            st.session_state.ticket_created = False
+            st.rerun()
+
 
 def show_users_page():
     if not require_auth('can_create_users'):
@@ -1438,6 +1964,9 @@ def show_analytics_page():
 
 def show_sidebar():
     with st.sidebar:
+        st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 Flow
+def show_sidebar():
+    with st.sidebar:
         st.markdown('<div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 0.5rem; color: white; margin-bottom: 1rem;"><h2>🎫 FlowTLS SYNC+</h2><p>Professional Edition</p></div>', unsafe_allow_html=True)
         
         if st.session_state.user:
@@ -1476,9 +2005,26 @@ def show_sidebar():
             
             st.markdown("---")
             
+            # Show currently viewing ticket if applicable
+            if st.session_state.selected_ticket_id and st.session_state.page == 'ticket_detail':
+                st.markdown("**Currently Viewing:**")
+                ticket = ticket_service.get_ticket_by_id(st.session_state.selected_ticket_id)
+                if ticket:
+                    st.markdown(f"🎫 #{ticket['id']}")
+                    st.markdown(f"**{ticket['title'][:30]}{'...' if len(ticket['title']) > 30 else ''}**")
+                    st.markdown(f'<span class="priority-{ticket["priority"].lower()}">{ticket["priority"]}</span>', unsafe_allow_html=True)
+                    st.markdown(f'<span class="status-{ticket["status"].lower().replace(" ", "-")}">{ticket["status"]}</span>', unsafe_allow_html=True)
+                    
+                    if st.button("📋 Back to Tickets", use_container_width=True):
+                        st.session_state.page = 'tickets'
+                        st.session_state.selected_ticket_id = None
+                        st.rerun()
+                st.markdown("---")
+            
             if st.button("🚪 Logout", use_container_width=True):
                 st.session_state.user = None
                 st.session_state.page = 'login'
+                st.session_state.selected_ticket_id = None
                 st.rerun()
 
 
@@ -1493,6 +2039,8 @@ def main():
             show_dashboard()
         elif st.session_state.page == 'tickets':
             show_tickets_page()
+        elif st.session_state.page == 'ticket_detail':
+            show_ticket_detail_page()
         elif st.session_state.page == 'create_ticket':
             show_create_ticket_page()
         elif st.session_state.page == 'users':
@@ -1510,4 +2058,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()        
