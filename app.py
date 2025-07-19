@@ -1203,6 +1203,7 @@ def show_login_page():
                 if username and password:
                     try:
                         success, user, error_msg = auth_service.login(username, password)
+                        st.write(f"Debug: Login result - Success: {success}, Error: {error_msg}")
                         if success:
                             st.session_state.user = user
                             st.session_state.page = 'dashboard'
