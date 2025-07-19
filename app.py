@@ -11,8 +11,8 @@ import threading
 import uuid
 import time
 import os
-if os.path.exists("flowtls_professional.db"):
-    os.remove("flowtls_professional.db")
+# if os.path.exists("flowtls_professional.db"):
+    # os.remove("flowtls_professional.db")
     
 st.set_page_config(
     page_title="FlowTLS SYNC+ Professional",
@@ -211,8 +211,9 @@ class DatabaseManager:
     
     def get_connection(self):
         try:
-            conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=20.0, isolation_level=None)
-            conn.execute("PRAGMA journal_mode=WAL")
+            conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
+            conn.execute("PRAGMA journal_mode=DELETE")  # Change from WAL to DELETE
+            conn.execute("PRAGMA synchronous=NORMAL")
             return conn
         except Exception as e:
             st.error(f"Database connection error: {str(e)}")
@@ -1202,6 +1203,7 @@ def show_login_page():
                 st.write(f"Debug: Form submitted with username: {username}, password length: {len(password) if password else 0}")
                 if username and password:
                     try:
+                        st.write("Debug: About to call auth_service.login()")
                         success, user, error_msg = auth_service.login(username, password)
                         st.write(f"Debug: Login result - Success: {success}, Error: {error_msg}")
                         if success:
