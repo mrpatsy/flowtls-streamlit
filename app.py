@@ -549,7 +549,7 @@ class AuthService:
         return self.hash_password(password, salt) == hash_value
     
     def create_session(self, user_id: int, ip_address: str = "", user_agent: str = "") -> str:
-    session_id = str(uuid.uuid4())
+        session_id = str(uuid.uuid4())
     
         with db_lock:
             try:
