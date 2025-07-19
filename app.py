@@ -603,11 +603,13 @@ class AuthService:
             """, (username,))
             
             user = cursor.fetchone()
+            st.write(f"Debug: Found user: {user is not None}")
             
             if not user:
                 conn.close()
                 return False, None, "Invalid username or password"
             
+            st.write(f"Debug: Password verification passed")
             if not self.verify_password(password, user[3], user[4]):
                 conn.close()
                 return False, None, "Invalid username or password"
