@@ -212,7 +212,6 @@ class DatabaseManager:
     def get_connection(self):
         try:
             conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
-            conn.execute("PRAGMA journal_mode=DELETE")  # Change from WAL to DELETE
             conn.execute("PRAGMA synchronous=NORMAL")
             return conn
         except Exception as e:
@@ -590,55 +589,58 @@ class AuthService:
         if not username or not password:
             return False, None, "Username and password are required"
         
-        with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    SELECT id, username, email, password_hash, salt, first_name, last_name, role,
-                           department, company_id, is_active, can_create_users, can_deactivate_users,
-                           can_reset_passwords, can_manage_tickets, can_view_all_tickets, 
-                           can_delete_tickets, can_export_data, location
-                    FROM users WHERE username = ? AND is_active = 1
-                """, (username,))
-                
-                user = cursor.fetchone()
-                
-                if not user:
-                    conn.close()
-                    return False, None, "Invalid username or password"
-                
-                if not self.verify_password(password, user[3], user[4]):
-                    conn.close()
-                    return False, None, "Invalid username or password"
-                
-                cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", (datetime.now().isoformat(), user[0]))
-                
-                # Create session
-                session_id = self.create_session(user[0])
-
-                user_data = {
-                    'id': user[0], 'username': user[1], 'email': user[2],
-                    'first_name': user[5], 'last_name': user[6], 'full_name': f"{user[5]} {user[6]}".strip(),
-                    'role': user[7], 'department': user[8], 'company_id': user[9],
-                    'location': user[18] or 'Unknown',
-                    'session_id': session_id,
-                    'permissions': {
-                        'can_create_users': bool(user[11]), 'can_deactivate_users': bool(user[12]),
-                        'can_reset_passwords': bool(user[13]), 'can_manage_tickets': bool(user[14]),
-                        'can_view_all_tickets': bool(user[15]), 'can_delete_tickets': bool(user[16]),
-                        'can_export_data': bool(user[17])
-                    }
-                }
-                
-                conn.commit()
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Simple query without complex locking
+            cursor.execute("""
+                SELECT id, username, email, password_hash, salt, first_name, last_name, role,
+                       department, company_id, is_active, can_create_users, can_deactivate_users,
+                       can_reset_passwords, can_manage_tickets, can_view_all_tickets, 
+                       can_delete_tickets, can_export_data, location
+                FROM users WHERE username = ? AND is_active = 1
+            """, (username,))
+            
+            user = cursor.fetchone()
+            
+            if not user:
                 conn.close()
-                return True, user_data, ""
-                
-            except Exception as e:
-                return False, None, f"Authentication error: {str(e)}"
-
+                return False, None, "Invalid username or password"
+            
+            if not self.verify_password(password, user[3], user[4]):
+                conn.close()
+                return False, None, "Invalid username or password"
+            
+            # Update last login
+            cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", 
+                          (datetime.now().isoformat(), user[0]))
+            
+            # Create simple session ID
+            session_id = str(uuid.uuid4())
+            
+            user_data = {
+                'id': user[0], 'username': user[1], 'email': user[2],
+                'first_name': user[5], 'last_name': user[6], 
+                'full_name': f"{user[5]} {user[6]}".strip(),
+                'role': user[7], 'department': user[8], 'company_id': user[9],
+                'location': user[18] if len(user) > 18 and user[18] else 'Unknown',
+                'session_id': session_id,
+                'permissions': {
+                    'can_create_users': bool(user[11]), 'can_deactivate_users': bool(user[12]),
+                    'can_reset_passwords': bool(user[13]), 'can_manage_tickets': bool(user[14]),
+                    'can_view_all_tickets': bool(user[15]), 'can_delete_tickets': bool(user[16]),
+                    'can_export_data': bool(user[17])
+                }
+            }
+            
+            conn.commit()
+            conn.close()
+            return True, user_data, ""
+            
+        except Exception as e:
+            st.error(f"Login error details: {str(e)}")
+            return False, None, f"Authentication error: {str(e)}"
 
 class UserService:
     def __init__(self, db_manager):
