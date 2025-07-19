@@ -615,8 +615,8 @@ class AuthService:
                 return False, None, "Invalid username or password"
             
             # Update last login
-            cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", 
-                          (datetime.now().isoformat(), user[0]))
+            #cursor.execute("UPDATE users SET last_login_date = ? WHERE id = ?", 
+                         # (datetime.now().isoformat(), user[0]))
             
             # Create simple session ID
             session_id = str(uuid.uuid4())
@@ -636,7 +636,7 @@ class AuthService:
                 }
             }
             
-            conn.commit()
+            #conn.commit()
             conn.close()
             return True, user_data, ""
             
