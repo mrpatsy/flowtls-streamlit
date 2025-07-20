@@ -220,153 +220,153 @@ class DatabaseManager:
     
     def _init_database(self):
         # with db_lock:
-            try:
-                conn = self.get_connection()
-                cursor = conn.cursor()
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.executescript("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    salt TEXT NOT NULL,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    role TEXT DEFAULT 'User',
+                    department TEXT DEFAULT '',
+                    phone TEXT DEFAULT '',
+                    company_id TEXT DEFAULT '',
+                    is_active INTEGER DEFAULT 1,
+                    created_date TEXT NOT NULL,
+                    last_login_date TEXT,
+                    created_by TEXT DEFAULT '',
+                    can_create_users INTEGER DEFAULT 0,
+                    can_deactivate_users INTEGER DEFAULT 0,
+                    can_reset_passwords INTEGER DEFAULT 0,
+                    can_manage_tickets INTEGER DEFAULT 0,
+                    can_view_all_tickets INTEGER DEFAULT 0,
+                    can_delete_tickets INTEGER DEFAULT 0,
+                    can_export_data INTEGER DEFAULT 0,
+                    location TEXT DEFAULT ''
+                );
                 
-                cursor.executescript("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        email TEXT UNIQUE NOT NULL,
-                        password_hash TEXT NOT NULL,
-                        salt TEXT NOT NULL,
-                        first_name TEXT NOT NULL,
-                        last_name TEXT NOT NULL,
-                        role TEXT DEFAULT 'User',
-                        department TEXT DEFAULT '',
-                        phone TEXT DEFAULT '',
-                        company_id TEXT DEFAULT '',
-                        is_active INTEGER DEFAULT 1,
-                        created_date TEXT NOT NULL,
-                        last_login_date TEXT,
-                        created_by TEXT DEFAULT '',
-                        can_create_users INTEGER DEFAULT 0,
-                        can_deactivate_users INTEGER DEFAULT 0,
-                        can_reset_passwords INTEGER DEFAULT 0,
-                        can_manage_tickets INTEGER DEFAULT 0,
-                        can_view_all_tickets INTEGER DEFAULT 0,
-                        can_delete_tickets INTEGER DEFAULT 0,
-                        can_export_data INTEGER DEFAULT 0,
-                        location TEXT DEFAULT ''
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS tickets (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        title TEXT NOT NULL,
-                        description TEXT NOT NULL,
-                        priority TEXT DEFAULT 'Medium',
-                        status TEXT DEFAULT 'Open',
-                        assigned_to TEXT DEFAULT '',
-                        category TEXT DEFAULT 'General',
-                        subcategory TEXT DEFAULT '',
-                        created_date TEXT NOT NULL,
-                        updated_date TEXT,
-                        due_date TEXT,
-                        reporter TEXT DEFAULT '',
-                        resolution TEXT DEFAULT '',
-                        tags TEXT DEFAULT '',
-                        estimated_hours REAL DEFAULT 0,
-                        actual_hours REAL DEFAULT 0,
-                        company_id TEXT DEFAULT '',
-                        source TEXT DEFAULT 'Manual',
-                        modified_by TEXT DEFAULT '',
-                        last_viewed_by TEXT DEFAULT '',
-                        last_viewed_date TEXT,
-                        is_locked INTEGER DEFAULT 0,
-                        locked_by TEXT DEFAULT '',
-                        locked_date TEXT,
-                        email_thread_id TEXT DEFAULT '',
-                        auto_generated INTEGER DEFAULT 0
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_history (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ticket_id INTEGER NOT NULL,
-                        action_type TEXT NOT NULL,
-                        field_changed TEXT DEFAULT '',
-                        old_value TEXT DEFAULT '',
-                        new_value TEXT DEFAULT '',
-                        comment TEXT DEFAULT '',
-                        created_by TEXT NOT NULL,
-                        created_date TEXT NOT NULL,
-                        session_id TEXT DEFAULT '',
-                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_updates (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        ticket_id INTEGER NOT NULL,
-                        update_text TEXT NOT NULL,
-                        is_internal BOOLEAN DEFAULT 0,
-                        created_by TEXT NOT NULL,
-                        created_date TEXT NOT NULL,
-                        email_sent BOOLEAN DEFAULT 0,
-                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS companies (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        company_id TEXT UNIQUE NOT NULL,
-                        company_name TEXT NOT NULL,
-                        contact_email TEXT DEFAULT '',
-                        phone TEXT DEFAULT '',
-                        address TEXT DEFAULT '',
-                        is_active INTEGER DEFAULT 1,
-                        created_date TEXT NOT NULL,
-                        support_email TEXT DEFAULT ''
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS user_sessions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER NOT NULL,
-                        session_id TEXT UNIQUE NOT NULL,
-                        login_time TEXT NOT NULL,
-                        last_activity TEXT NOT NULL,
-                        is_active INTEGER DEFAULT 1,
-                        ip_address TEXT DEFAULT '',
-                        user_agent TEXT DEFAULT '',
-                        FOREIGN KEY (user_id) REFERENCES users (id)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS email_integration (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        email_address TEXT NOT NULL,
-                        ticket_id INTEGER,
-                        subject TEXT,
-                        body TEXT,
-                        received_date TEXT NOT NULL,
-                        processed BOOLEAN DEFAULT 0,
-                        FOREIGN KEY (ticket_id) REFERENCES tickets (id)
-                    );
-                    
-                    CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
-                    CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
-                    CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
-                    CREATE INDEX IF NOT EXISTS idx_tickets_company_id ON tickets(company_id);
-                    CREATE INDEX IF NOT EXISTS idx_tickets_created_date ON tickets(created_date);
-                    CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id ON ticket_history(ticket_id);
-                    CREATE INDEX IF NOT EXISTS idx_ticket_updates_ticket_id ON ticket_updates(ticket_id);
-                    CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
-                """)                
-                cursor.execute("SELECT COUNT(*) FROM users")
-                if cursor.fetchone()[0] == 0:
-                    self._create_default_users(cursor)
+                CREATE TABLE IF NOT EXISTS tickets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    priority TEXT DEFAULT 'Medium',
+                    status TEXT DEFAULT 'Open',
+                    assigned_to TEXT DEFAULT '',
+                    category TEXT DEFAULT 'General',
+                    subcategory TEXT DEFAULT '',
+                    created_date TEXT NOT NULL,
+                    updated_date TEXT,
+                    due_date TEXT,
+                    reporter TEXT DEFAULT '',
+                    resolution TEXT DEFAULT '',
+                    tags TEXT DEFAULT '',
+                    estimated_hours REAL DEFAULT 0,
+                    actual_hours REAL DEFAULT 0,
+                    company_id TEXT DEFAULT '',
+                    source TEXT DEFAULT 'Manual',
+                    modified_by TEXT DEFAULT '',
+                    last_viewed_by TEXT DEFAULT '',
+                    last_viewed_date TEXT,
+                    is_locked INTEGER DEFAULT 0,
+                    locked_by TEXT DEFAULT '',
+                    locked_date TEXT,
+                    email_thread_id TEXT DEFAULT '',
+                    auto_generated INTEGER DEFAULT 0
+                );
                 
-                cursor.execute("SELECT COUNT(*) FROM tickets")
-                if cursor.fetchone()[0] == 0:
-                    self._create_sample_tickets(cursor)
+                CREATE TABLE IF NOT EXISTS ticket_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id INTEGER NOT NULL,
+                    action_type TEXT NOT NULL,
+                    field_changed TEXT DEFAULT '',
+                    old_value TEXT DEFAULT '',
+                    new_value TEXT DEFAULT '',
+                    comment TEXT DEFAULT '',
+                    created_by TEXT NOT NULL,
+                    created_date TEXT NOT NULL,
+                    session_id TEXT DEFAULT '',
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                );
                 
-                cursor.execute("SELECT COUNT(*) FROM companies")
-                if cursor.fetchone()[0] == 0:
-                    self._create_sample_companies(cursor)
+                CREATE TABLE IF NOT EXISTS ticket_updates (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id INTEGER NOT NULL,
+                    update_text TEXT NOT NULL,
+                    is_internal BOOLEAN DEFAULT 0,
+                    created_by TEXT NOT NULL,
+                    created_date TEXT NOT NULL,
+                    email_sent BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                );
                 
-                conn.commit()
-                conn.close()
+                CREATE TABLE IF NOT EXISTS companies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id TEXT UNIQUE NOT NULL,
+                    company_name TEXT NOT NULL,
+                    contact_email TEXT DEFAULT '',
+                    phone TEXT DEFAULT '',
+                    address TEXT DEFAULT '',
+                    is_active INTEGER DEFAULT 1,
+                    created_date TEXT NOT NULL,
+                    support_email TEXT DEFAULT ''
+                );
                 
-            except Exception as e:
-                st.error(f"Database initialization error: {str(e)}")
-                raise
+                CREATE TABLE IF NOT EXISTS user_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    session_id TEXT UNIQUE NOT NULL,
+                    login_time TEXT NOT NULL,
+                    last_activity TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 1,
+                    ip_address TEXT DEFAULT '',
+                    user_agent TEXT DEFAULT '',
+                    FOREIGN KEY (user_id) REFERENCES users (id)
+                );
+                
+                CREATE TABLE IF NOT EXISTS email_integration (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email_address TEXT NOT NULL,
+                    ticket_id INTEGER,
+                    subject TEXT,
+                    body TEXT,
+                    received_date TEXT NOT NULL,
+                    processed BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                );
+                
+                CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+                CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
+                CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+                CREATE INDEX IF NOT EXISTS idx_tickets_company_id ON tickets(company_id);
+                CREATE INDEX IF NOT EXISTS idx_tickets_created_date ON tickets(created_date);
+                CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket_id ON ticket_history(ticket_id);
+                CREATE INDEX IF NOT EXISTS idx_ticket_updates_ticket_id ON ticket_updates(ticket_id);
+                CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+            """)                
+            cursor.execute("SELECT COUNT(*) FROM users")
+            if cursor.fetchone()[0] == 0:
+                self._create_default_users(cursor)
+            
+            cursor.execute("SELECT COUNT(*) FROM tickets")
+            if cursor.fetchone()[0] == 0:
+                self._create_sample_tickets(cursor)
+            
+            cursor.execute("SELECT COUNT(*) FROM companies")
+            if cursor.fetchone()[0] == 0:
+                self._create_sample_companies(cursor)
+            
+            conn.commit()
+            conn.close()
+            
+        except Exception as e:
+            st.error(f"Database initialization error: {str(e)}")
+            raise
     
     def _create_default_users(self, cursor):
         users = [
@@ -470,76 +470,76 @@ class ConcurrencyManager:
     
     def acquire_ticket_lock(self, ticket_id: int, user_name: str) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                # Check if ticket is already locked
-                cursor.execute("""
-                    SELECT locked_by, locked_date FROM tickets 
-                    WHERE id = ? AND is_locked = 1
-                """, (ticket_id,))
-                
-                existing_lock = cursor.fetchone()
-                if existing_lock:
-                    locked_by, locked_date = existing_lock
-                    if locked_date:
-                        lock_time = datetime.fromisoformat(locked_date)
-                        if datetime.now() - lock_time < timedelta(minutes=self.lock_timeout_minutes):
-                            if locked_by != user_name:
-                                conn.close()
-                                return False, f"Ticket is being edited by {locked_by}"
-                
-                # Acquire lock
-                cursor.execute("""
-                    UPDATE tickets SET is_locked = 1, locked_by = ?, locked_date = ?
-                    WHERE id = ?
-                """, (user_name, datetime.now().isoformat(), ticket_id))
-                
-                conn.commit()
-                conn.close()
-                return True, "Lock acquired"
-            except Exception as e:
-                return False, f"Error acquiring lock: {str(e)}"
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Check if ticket is already locked
+            cursor.execute("""
+                SELECT locked_by, locked_date FROM tickets 
+                WHERE id = ? AND is_locked = 1
+            """, (ticket_id,))
+            
+            existing_lock = cursor.fetchone()
+            if existing_lock:
+                locked_by, locked_date = existing_lock
+                if locked_date:
+                    lock_time = datetime.fromisoformat(locked_date)
+                    if datetime.now() - lock_time < timedelta(minutes=self.lock_timeout_minutes):
+                        if locked_by != user_name:
+                            conn.close()
+                            return False, f"Ticket is being edited by {locked_by}"
+            
+            # Acquire lock
+            cursor.execute("""
+                UPDATE tickets SET is_locked = 1, locked_by = ?, locked_date = ?
+                WHERE id = ?
+            """, (user_name, datetime.now().isoformat(), ticket_id))
+            
+            conn.commit()
+            conn.close()
+            return True, "Lock acquired"
+        except Exception as e:
+            return False, f"Error acquiring lock: {str(e)}"
     
     def release_ticket_lock(self, ticket_id: int, user_name: str):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    UPDATE tickets SET is_locked = 0, locked_by = '', locked_date = ''
-                    WHERE id = ? AND locked_by = ?
-                """, (ticket_id, user_name))
-                
-                conn.commit()
-                conn.close()
-            except Exception as e:
-                pass
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE tickets SET is_locked = 0, locked_by = '', locked_date = ''
+                WHERE id = ? AND locked_by = ?
+            """, (ticket_id, user_name))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            pass
     
     def check_ticket_lock_status(self, ticket_id: int) -> Dict:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    SELECT is_locked, locked_by, locked_date FROM tickets WHERE id = ?
-                """, (ticket_id,))
-                
-                result = cursor.fetchone()
-                conn.close()
-                
-                if result:
-                    return {
-                        'is_locked': bool(result[0]),
-                        'locked_by': result[1] or '',
-                        'locked_date': result[2] or ''
-                    }
-                return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
-            except Exception as e:
-                return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT is_locked, locked_by, locked_date FROM tickets WHERE id = ?
+            """, (ticket_id,))
+            
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                return {
+                    'is_locked': bool(result[0]),
+                    'locked_by': result[1] or '',
+                    'locked_date': result[2] or ''
+                }
+            return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
+        except Exception as e:
+            return {'is_locked': False, 'locked_by': '', 'locked_date': ''}
 
 class AuthService:
     def __init__(self, db_manager):
@@ -555,35 +555,35 @@ class AuthService:
         session_id = str(uuid.uuid4())
     
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    INSERT INTO user_sessions (user_id, session_id, login_time, last_activity, ip_address, user_agent)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (user_id, session_id, datetime.now().isoformat(), datetime.now().isoformat(), ip_address, user_agent))
-                
-                conn.commit()
-                conn.close()
-                return session_id
-            except Exception as e:
-                return ""
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO user_sessions (user_id, session_id, login_time, last_activity, ip_address, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (user_id, session_id, datetime.now().isoformat(), datetime.now().isoformat(), ip_address, user_agent))
+            
+            conn.commit()
+            conn.close()
+            return session_id
+        except Exception as e:
+            return ""
 
     def update_session_activity(self, session_id: str):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    UPDATE user_sessions SET last_activity = ? WHERE session_id = ? AND is_active = 1
-                """, (datetime.now().isoformat(), session_id))
-                
-                conn.commit()
-                conn.close()
-            except Exception as e:
-                pass
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE user_sessions SET last_activity = ? WHERE session_id = ? AND is_active = 1
+            """, (datetime.now().isoformat(), session_id))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            pass
     
     def login(self, username: str, password: str) -> Tuple[bool, Optional[Dict], str]:
         if not username or not password:
@@ -650,40 +650,40 @@ class UserService:
     
     def get_all_users(self, include_inactive=False):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                query = """
-                    SELECT id, username, email, first_name, last_name, role, department, 
-                           company_id, is_active, created_date, last_login_date, created_by,
-                           can_create_users, can_deactivate_users, can_reset_passwords,
-                           can_manage_tickets, can_view_all_tickets, can_delete_tickets,
-                           can_export_data, phone, location
-                    FROM users {} ORDER BY created_date DESC
-                """.format("" if include_inactive else "WHERE is_active = 1")                
-                cursor.execute(query)
-                
-                users = []
-                for row in cursor.fetchall():
-                    user = {
-                        'id': row[0], 'username': row[1], 'email': row[2],
-                        'first_name': row[3], 'last_name': row[4], 'full_name': f"{row[3]} {row[4]}".strip(),
-                        'role': row[5], 'department': row[6], 'company_id': row[7],
-                        'is_active': bool(row[8]), 'created_date': row[9], 'last_login_date': row[10],
-                        'created_by': row[11], 'phone': row[19], 
-                        'location': row[20] or 'Unknown',
-                        'permissions': {
-                            'can_create_users': bool(row[12]), 'can_deactivate_users': bool(row[13]),
-                            'can_reset_passwords': bool(row[14]), 'can_manage_tickets': bool(row[15]),
-                            'can_view_all_tickets': bool(row[16]), 'can_delete_tickets': bool(row[17]),
-                            'can_export_data': bool(row[18])
-                        }
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            query = """
+                SELECT id, username, email, first_name, last_name, role, department, 
+                       company_id, is_active, created_date, last_login_date, created_by,
+                       can_create_users, can_deactivate_users, can_reset_passwords,
+                       can_manage_tickets, can_view_all_tickets, can_delete_tickets,
+                       can_export_data, phone, location
+                FROM users {} ORDER BY created_date DESC
+            """.format("" if include_inactive else "WHERE is_active = 1")                
+            cursor.execute(query)
+            
+            users = []
+            for row in cursor.fetchall():
+                user = {
+                    'id': row[0], 'username': row[1], 'email': row[2],
+                    'first_name': row[3], 'last_name': row[4], 'full_name': f"{row[3]} {row[4]}".strip(),
+                    'role': row[5], 'department': row[6], 'company_id': row[7],
+                    'is_active': bool(row[8]), 'created_date': row[9], 'last_login_date': row[10],
+                    'created_by': row[11], 'phone': row[19], 
+                    'location': row[20] or 'Unknown',
+                    'permissions': {
+                        'can_create_users': bool(row[12]), 'can_deactivate_users': bool(row[13]),
+                        'can_reset_passwords': bool(row[14]), 'can_manage_tickets': bool(row[15]),
+                        'can_view_all_tickets': bool(row[16]), 'can_delete_tickets': bool(row[17]),
+                        'can_export_data': bool(row[18])
                     }
-                    users.append(user)
-                
-                conn.close()
-                return users
+                }
+                users.append(user)
+            
+            conn.close()
+            return users
                 
             except Exception as e:
                 st.error(f"Error retrieving users: {str(e)}")
@@ -691,48 +691,48 @@ class UserService:
     
     def get_companies(self):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("SELECT company_id, company_name, contact_email, phone, address, is_active FROM companies ORDER BY company_name")
-                
-                companies = []
-                for row in cursor.fetchall():
-                    company = {
-                        'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
-                        'phone': row[3], 'address': row[4], 'is_active': bool(row[5])
-                    }
-                    companies.append(company)
-                
-                conn.close()
-                return companies
-            except Exception as e:
-                st.error(f"Error retrieving companies: {str(e)}")
-                return []
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT company_id, company_name, contact_email, phone, address, is_active FROM companies ORDER BY company_name")
+            
+            companies = []
+            for row in cursor.fetchall():
+                company = {
+                    'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
+                    'phone': row[3], 'address': row[4], 'is_active': bool(row[5])
+                }
+                companies.append(company)
+            
+            conn.close()
+            return companies
+        except Exception as e:
+            st.error(f"Error retrieving companies: {str(e)}")
+            return []
     
     def get_company_by_id(self, company_id):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("SELECT company_id, company_name, contact_email, phone, address FROM companies WHERE company_id = ?", (company_id,))
-                row = cursor.fetchone()
-                
-                if row:
-                    company = {
-                        'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
-                        'phone': row[3], 'address': row[4]
-                    }
-                    conn.close()
-                    return company
-                
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT company_id, company_name, contact_email, phone, address FROM companies WHERE company_id = ?", (company_id,))
+            row = cursor.fetchone()
+            
+            if row:
+                company = {
+                    'company_id': row[0], 'company_name': row[1], 'contact_email': row[2],
+                    'phone': row[3], 'address': row[4]
+                }
                 conn.close()
-                return None
-            except Exception as e:
-                st.error(f"Error retrieving company: {str(e)}")
-                return None
+                return company
+            
+            conn.close()
+            return None
+        except Exception as e:
+            st.error(f"Error retrieving company: {str(e)}")
+            return None
 
 
 class TicketService:
@@ -741,241 +741,241 @@ class TicketService:
     
     def get_all_tickets(self, user_id: int, permissions: Dict, user_name: str) -> List[Dict]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                if permissions.get('can_view_all_tickets', False):
-                    cursor.execute("""
-                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                               created_date, updated_date, due_date, reporter, resolution, tags,
-                               estimated_hours, actual_hours, company_id, source, modified_by,
-                               last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
-                               email_thread_id, auto_generated
-                        FROM tickets ORDER BY created_date DESC
-                    """)                
-                else:
-                    cursor.execute("""
-                        SELECT id, title, description, priority, status, assigned_to, category, subcategory,
-                               created_date, updated_date, due_date, reporter, resolution, tags,
-                               estimated_hours, actual_hours, company_id, source, modified_by,
-                               last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
-                               email_thread_id, auto_generated
-                        FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
-                    """, (user_name, user_name))
-                
-                tickets = []
-                for row in cursor.fetchall():
-                    ticket = {
-                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
-                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
-                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
-                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
-                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
-                        'company_id': row[16], 'source': row[17], 'modified_by': row[18],
-                        'last_viewed_by': row[19], 'last_viewed_date': row[20], 'is_locked': bool(row[21]), 'locked_by': row[22] or '', 'locked_date': row[23],
-                        'email_thread_id': row[24] or '', 'auto_generated': bool(row[25]),
-                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
-                    }
-                    tickets.append(ticket)
-                
-                conn.close()
-                return tickets
-            except Exception as e:
-                st.error(f"Error retrieving tickets: {str(e)}")
-                return []
-    
-    def get_ticket_by_id(self, ticket_id: int) -> Optional[Dict]:
-        # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            if permissions.get('can_view_all_tickets', False):
                 cursor.execute("""
                     SELECT id, title, description, priority, status, assigned_to, category, subcategory,
                            created_date, updated_date, due_date, reporter, resolution, tags,
                            estimated_hours, actual_hours, company_id, source, modified_by,
-                           last_viewed_by, last_viewed_date
-                    FROM tickets WHERE id = ?
-                """, (ticket_id,))
-                
-                row = cursor.fetchone()
-                if row:
-                    ticket = {
-                        'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
-                        'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
-                        'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
-                        'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
-                        'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
-                        'company_id': row[16], 'source': row[17], 'modified_by': row[18],
-                        'last_viewed_by': row[19], 'last_viewed_date': row[20],
-                        'is_overdue': self.is_ticket_overdue(row[10], row[4])
-                    }
-                    conn.close()
-                    return ticket
-                
+                           last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
+                           email_thread_id, auto_generated
+                    FROM tickets ORDER BY created_date DESC
+                """)                
+            else:
+                cursor.execute("""
+                    SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                           created_date, updated_date, due_date, reporter, resolution, tags,
+                           estimated_hours, actual_hours, company_id, source, modified_by,
+                           last_viewed_by, last_viewed_date, is_locked, locked_by, locked_date,
+                           email_thread_id, auto_generated
+                    FROM tickets WHERE reporter = ? OR assigned_to = ? ORDER BY created_date DESC
+                """, (user_name, user_name))
+            
+            tickets = []
+            for row in cursor.fetchall():
+                ticket = {
+                    'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
+                    'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
+                    'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
+                    'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
+                    'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
+                    'company_id': row[16], 'source': row[17], 'modified_by': row[18],
+                    'last_viewed_by': row[19], 'last_viewed_date': row[20], 'is_locked': bool(row[21]), 'locked_by': row[22] or '', 'locked_date': row[23],
+                    'email_thread_id': row[24] or '', 'auto_generated': bool(row[25]),
+                    'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                }
+                tickets.append(ticket)
+            
+            conn.close()
+            return tickets
+        except Exception as e:
+            st.error(f"Error retrieving tickets: {str(e)}")
+            return []
+    
+    def get_ticket_by_id(self, ticket_id: int) -> Optional[Dict]:
+        # with db_lock:
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, title, description, priority, status, assigned_to, category, subcategory,
+                       created_date, updated_date, due_date, reporter, resolution, tags,
+                       estimated_hours, actual_hours, company_id, source, modified_by,
+                       last_viewed_by, last_viewed_date
+                FROM tickets WHERE id = ?
+            """, (ticket_id,))
+            
+            row = cursor.fetchone()
+            if row:
+                ticket = {
+                    'id': row[0], 'title': row[1], 'description': row[2], 'priority': row[3],
+                    'status': row[4], 'assigned_to': row[5] or 'Unassigned', 'category': row[6],
+                    'subcategory': row[7], 'created_date': row[8], 'updated_date': row[9],
+                    'due_date': row[10], 'reporter': row[11] or 'Unknown', 'resolution': row[12],
+                    'tags': row[13], 'estimated_hours': row[14], 'actual_hours': row[15],
+                    'company_id': row[16], 'source': row[17], 'modified_by': row[18],
+                    'last_viewed_by': row[19], 'last_viewed_date': row[20],
+                    'is_overdue': self.is_ticket_overdue(row[10], row[4])
+                }
                 conn.close()
-                return None
-            except Exception as e:
-                st.error(f"Error retrieving ticket: {str(e)}")
-                return None
+                return ticket
+            
+            conn.close()
+            return None
+        except Exception as e:
+            st.error(f"Error retrieving ticket: {str(e)}")
+            return None
     
     def get_ticket_history(self, ticket_id: int) -> List[Dict]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    SELECT id, action_type, field_changed, old_value, new_value, comment,
-                           created_by, created_date
-                    FROM ticket_history WHERE ticket_id = ? ORDER BY created_date DESC
-                """, (ticket_id,))
-                
-                history = []
-                for row in cursor.fetchall():
-                    entry = {
-                        'id': row[0], 'action_type': row[1], 'field_changed': row[2],
-                        'old_value': row[3], 'new_value': row[4], 'comment': row[5],
-                        'created_by': row[6], 'created_date': row[7]
-                    }
-                    history.append(entry)
-                
-                conn.close()
-                return history
-            except Exception as e:
-                st.error(f"Error retrieving ticket history: {str(e)}")
-                return []
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, action_type, field_changed, old_value, new_value, comment,
+                       created_by, created_date
+                FROM ticket_history WHERE ticket_id = ? ORDER BY created_date DESC
+            """, (ticket_id,))
+            
+            history = []
+            for row in cursor.fetchall():
+                entry = {
+                    'id': row[0], 'action_type': row[1], 'field_changed': row[2],
+                    'old_value': row[3], 'new_value': row[4], 'comment': row[5],
+                    'created_by': row[6], 'created_date': row[7]
+                }
+                history.append(entry)
+            
+            conn.close()
+            return history
+        except Exception as e:
+            st.error(f"Error retrieving ticket history: {str(e)}")
+            return []
     
     def get_ticket_updates(self, ticket_id: int) -> List[Dict]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    SELECT id, update_text, is_internal, created_by, created_date
-                    FROM ticket_updates WHERE ticket_id = ? ORDER BY created_date DESC
-                """, (ticket_id,))
-                
-                updates = []
-                for row in cursor.fetchall():
-                    update = {
-                        'id': row[0], 'update_text': row[1], 'is_internal': bool(row[2]),
-                        'created_by': row[3], 'created_date': row[4]
-                    }
-                    updates.append(update)
-                
-                conn.close()
-                return updates
-            except Exception as e:
-                st.error(f"Error retrieving ticket updates: {str(e)}")
-                return []
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, update_text, is_internal, created_by, created_date
+                FROM ticket_updates WHERE ticket_id = ? ORDER BY created_date DESC
+            """, (ticket_id,))
+            
+            updates = []
+            for row in cursor.fetchall():
+                update = {
+                    'id': row[0], 'update_text': row[1], 'is_internal': bool(row[2]),
+                    'created_by': row[3], 'created_date': row[4]
+                }
+                updates.append(update)
+            
+            conn.close()
+            return updates
+        except Exception as e:
+            st.error(f"Error retrieving ticket updates: {str(e)}")
+            return []
     
     def update_ticket_last_viewed(self, ticket_id: int, user_name: str):
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    UPDATE tickets SET last_viewed_by = ?, last_viewed_date = ?
-                    WHERE id = ?
-                """, (user_name, datetime.now().isoformat(), ticket_id))
-                
-                conn.commit()
-                conn.close()
-            except Exception as e:
-                st.error(f"Error updating last viewed: {str(e)}")
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE tickets SET last_viewed_by = ?, last_viewed_date = ?
+                WHERE id = ?
+            """, (user_name, datetime.now().isoformat(), ticket_id))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            st.error(f"Error updating last viewed: {str(e)}")
     
     def update_ticket(self, ticket_id: int, ticket_data: Dict, user_name: str) -> bool:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                # Get current ticket data for comparison
-                cursor.execute("""
-                    SELECT title, description, priority, status, assigned_to, category, 
-                           subcategory, tags, estimated_hours, actual_hours, resolution
-                    FROM tickets WHERE id = ?
-                """, (ticket_id,))
-                
-                current_data = cursor.fetchone()
-                if not current_data:
-                    conn.close()
-                    return False
-                
-                current_fields = {
-                    'title': current_data[0], 'description': current_data[1],
-                    'priority': current_data[2], 'status': current_data[3],
-                    'assigned_to': current_data[4], 'category': current_data[5],
-                    'subcategory': current_data[6], 'tags': current_data[7],
-                    'estimated_hours': current_data[8], 'actual_hours': current_data[9],
-                    'resolution': current_data[10]
-                }
-                
-                # Update the ticket
-                cursor.execute("""
-                    UPDATE tickets SET title = ?, description = ?, priority = ?, status = ?,
-                                     assigned_to = ?, category = ?, subcategory = ?, tags = ?,
-                                     estimated_hours = ?, actual_hours = ?, resolution = ?,
-                                     updated_date = ?, modified_by = ?
-                    WHERE id = ?
-                """, (
-                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
-                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
-                    ticket_data['subcategory'], ticket_data['tags'], ticket_data['estimated_hours'],
-                    ticket_data['actual_hours'], ticket_data['resolution'],
-                    datetime.now().isoformat(), user_name, ticket_id
-                ))
-                
-                # Log changes in history
-                for field, new_value in ticket_data.items():
-                    if field in current_fields and str(current_fields[field]) != str(new_value):
-                        cursor.execute("""
-                            INSERT INTO ticket_history (ticket_id, action_type, field_changed,
-                                                       old_value, new_value, created_by, created_date)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
-                        """, (ticket_id, 'Updated', field, str(current_fields[field]),
-                              str(new_value), user_name, datetime.now().isoformat()))
-                
-                conn.commit()
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get current ticket data for comparison
+            cursor.execute("""
+                SELECT title, description, priority, status, assigned_to, category, 
+                       subcategory, tags, estimated_hours, actual_hours, resolution
+                FROM tickets WHERE id = ?
+            """, (ticket_id,))
+            
+            current_data = cursor.fetchone()
+            if not current_data:
                 conn.close()
-                return True
-            except Exception as e:
-                st.error(f"Error updating ticket: {str(e)}")
                 return False
+            
+            current_fields = {
+                'title': current_data[0], 'description': current_data[1],
+                'priority': current_data[2], 'status': current_data[3],
+                'assigned_to': current_data[4], 'category': current_data[5],
+                'subcategory': current_data[6], 'tags': current_data[7],
+                'estimated_hours': current_data[8], 'actual_hours': current_data[9],
+                'resolution': current_data[10]
+            }
+            
+            # Update the ticket
+            cursor.execute("""
+                UPDATE tickets SET title = ?, description = ?, priority = ?, status = ?,
+                                 assigned_to = ?, category = ?, subcategory = ?, tags = ?,
+                                 estimated_hours = ?, actual_hours = ?, resolution = ?,
+                                 updated_date = ?, modified_by = ?
+                WHERE id = ?
+            """, (
+                ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                ticket_data['subcategory'], ticket_data['tags'], ticket_data['estimated_hours'],
+                ticket_data['actual_hours'], ticket_data['resolution'],
+                datetime.now().isoformat(), user_name, ticket_id
+            ))
+            
+            # Log changes in history
+            for field, new_value in ticket_data.items():
+                if field in current_fields and str(current_fields[field]) != str(new_value):
+                    cursor.execute("""
+                        INSERT INTO ticket_history (ticket_id, action_type, field_changed,
+                                                   old_value, new_value, created_by, created_date)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (ticket_id, 'Updated', field, str(current_fields[field]),
+                          str(new_value), user_name, datetime.now().isoformat()))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            st.error(f"Error updating ticket: {str(e)}")
+            return False
     
     def add_ticket_update(self, ticket_id: int, update_text: str, is_internal: bool, user_name: str) -> bool:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    INSERT INTO ticket_updates (ticket_id, update_text, is_internal, created_by, created_date)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (ticket_id, update_text, is_internal, user_name, datetime.now().isoformat()))
-                
-                # Add to history
-                update_type = "Internal Update" if is_internal else "Public Update"
-                cursor.execute("""
-                    INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (ticket_id, update_type, update_text, user_name, datetime.now().isoformat()))
-                
-                # Update ticket's updated_date
-                cursor.execute("""
-                    UPDATE tickets SET updated_date = ?, modified_by = ? WHERE id = ?
-                """, (datetime.now().isoformat(), user_name, ticket_id))
-                
-                conn.commit()
-                conn.close()
-                return True
-            except Exception as e:
-                st.error(f"Error adding ticket update: {str(e)}")
-                return False
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO ticket_updates (ticket_id, update_text, is_internal, created_by, created_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (ticket_id, update_text, is_internal, user_name, datetime.now().isoformat()))
+            
+            # Add to history
+            update_type = "Internal Update" if is_internal else "Public Update"
+            cursor.execute("""
+                INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (ticket_id, update_type, update_text, user_name, datetime.now().isoformat()))
+            
+            # Update ticket's updated_date
+            cursor.execute("""
+                UPDATE tickets SET updated_date = ?, modified_by = ? WHERE id = ?
+            """, (datetime.now().isoformat(), user_name, ticket_id))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            st.error(f"Error adding ticket update: {str(e)}")
+            return False
     
     def is_ticket_overdue(self, due_date: str, status: str) -> bool:
         if not due_date or status in ['Resolved', 'Closed']:
@@ -988,41 +988,41 @@ class TicketService:
     
     def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
-                due_date = datetime.now() + timedelta(hours=hours_to_add)
-                
-                cursor.execute("""
-                    INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
-                                       subcategory, created_date, updated_date, due_date, reporter, tags, 
-                                       company_id, modified_by)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    ticket_data['title'], ticket_data['description'], ticket_data['priority'],
-                    ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
-                    ticket_data['subcategory'], datetime.now().isoformat(), datetime.now().isoformat(),
-                    due_date.isoformat(), user_name, ticket_data['tags'], 
-                    ticket_data['company_id'], user_name
-                ))
-                
-                ticket_id = cursor.lastrowid
-                
-                # Add initial history entry
-                cursor.execute("""
-                    INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (ticket_id, 'Created', f'Ticket created: {ticket_data["title"]}', 
-                      user_name, datetime.now().isoformat()))
-                
-                conn.commit()
-                conn.close()
-                return True
-            except Exception as e:
-                st.error(f"Error creating ticket: {str(e)}")
-                return False
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            hours_to_add = {"Critical": 4, "High": 8, "Medium": 24, "Low": 72}[ticket_data['priority']]
+            due_date = datetime.now() + timedelta(hours=hours_to_add)
+            
+            cursor.execute("""
+                INSERT INTO tickets (title, description, priority, status, assigned_to, category, 
+                                   subcategory, created_date, updated_date, due_date, reporter, tags, 
+                                   company_id, modified_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                ticket_data['title'], ticket_data['description'], ticket_data['priority'],
+                ticket_data['status'], ticket_data['assigned_to'], ticket_data['category'],
+                ticket_data['subcategory'], datetime.now().isoformat(), datetime.now().isoformat(),
+                due_date.isoformat(), user_name, ticket_data['tags'], 
+                ticket_data['company_id'], user_name
+            ))
+            
+            ticket_id = cursor.lastrowid
+            
+            # Add initial history entry
+            cursor.execute("""
+                INSERT INTO ticket_history (ticket_id, action_type, comment, created_by, created_date)
+                VALUES (?, ?, ?, ?, ?)
+            """, (ticket_id, 'Created', f'Ticket created: {ticket_data["title"]}', 
+                  user_name, datetime.now().isoformat()))
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            st.error(f"Error creating ticket: {str(e)}")
+            return False
 
 
 class UserManagementService:
@@ -1031,116 +1031,116 @@ class UserManagementService:
     
     def create_user(self, user_data: Dict, created_by: str) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?", 
-                             (user_data['username'], user_data['email']))
-                if cursor.fetchone()[0] > 0:
-                    conn.close()
-                    return False, "Username or email already exists"
-                
-                salt = secrets.token_hex(32)
-                password_hash = hashlib.sha256((user_data['password'] + salt).encode()).hexdigest()
-                
-                cursor.execute("""
-                    INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
-                                     role, department, phone, company_id, created_date, created_by,
-                                     can_create_users, can_deactivate_users, can_reset_passwords,
-                                     can_manage_tickets, can_view_all_tickets, can_delete_tickets,
-                                     can_export_data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    user_data['username'], user_data['email'], password_hash, salt,
-                    user_data['first_name'], user_data['last_name'], user_data['role'],
-                    user_data['department'], user_data['phone'], user_data['company_id'],
-                    datetime.now().isoformat(), created_by,
-                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
-                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
-                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
-                    user_data.get('can_export_data', 0)
-                ))
-                
-                conn.commit()
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = ? OR email = ?", 
+                         (user_data['username'], user_data['email']))
+            if cursor.fetchone()[0] > 0:
                 conn.close()
-                return True, "User created successfully"
-            except Exception as e:
-                return False, f"Error creating user: {str(e)}"
+                return False, "Username or email already exists"
+            
+            salt = secrets.token_hex(32)
+            password_hash = hashlib.sha256((user_data['password'] + salt).encode()).hexdigest()
+            
+            cursor.execute("""
+                INSERT INTO users (username, email, password_hash, salt, first_name, last_name, 
+                                 role, department, phone, company_id, created_date, created_by,
+                                 can_create_users, can_deactivate_users, can_reset_passwords,
+                                 can_manage_tickets, can_view_all_tickets, can_delete_tickets,
+                                 can_export_data)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                user_data['username'], user_data['email'], password_hash, salt,
+                user_data['first_name'], user_data['last_name'], user_data['role'],
+                user_data['department'], user_data['phone'], user_data['company_id'],
+                datetime.now().isoformat(), created_by,
+                user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                user_data.get('can_export_data', 0)
+            ))
+            
+            conn.commit()
+            conn.close()
+            return True, "User created successfully"
+        except Exception as e:
+            return False, f"Error creating user: {str(e)}"
     
     def update_user(self, user_id: int, user_data: Dict) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("""
-                    UPDATE users SET first_name = ?, last_name = ?, role = ?, department = ?,
-                                   phone = ?, company_id = ?, can_create_users = ?, 
-                                   can_deactivate_users = ?, can_reset_passwords = ?,
-                                   can_manage_tickets = ?, can_view_all_tickets = ?,
-                                   can_delete_tickets = ?, can_export_data = ?
-                    WHERE id = ?
-                """, (
-                    user_data['first_name'], user_data['last_name'], user_data['role'],
-                    user_data['department'], user_data['phone'], user_data['company_id'],
-                    user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
-                    user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
-                    user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
-                    user_data.get('can_export_data', 0), user_id
-                ))
-                
-                conn.commit()
-                conn.close()
-                return True, "User updated successfully"
-            except Exception as e:
-                return False, f"Error updating user: {str(e)}"
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE users SET first_name = ?, last_name = ?, role = ?, department = ?,
+                               phone = ?, company_id = ?, can_create_users = ?, 
+                               can_deactivate_users = ?, can_reset_passwords = ?,
+                               can_manage_tickets = ?, can_view_all_tickets = ?,
+                               can_delete_tickets = ?, can_export_data = ?
+                WHERE id = ?
+            """, (
+                user_data['first_name'], user_data['last_name'], user_data['role'],
+                user_data['department'], user_data['phone'], user_data['company_id'],
+                user_data.get('can_create_users', 0), user_data.get('can_deactivate_users', 0),
+                user_data.get('can_reset_passwords', 0), user_data.get('can_manage_tickets', 0),
+                user_data.get('can_view_all_tickets', 0), user_data.get('can_delete_tickets', 0),
+                user_data.get('can_export_data', 0), user_id
+            ))
+            
+            conn.commit()
+            conn.close()
+            return True, "User updated successfully"
+        except Exception as e:
+            return False, f"Error updating user: {str(e)}"
     
     def reset_password(self, user_id: int, new_password: str) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                salt = secrets.token_hex(32)
-                password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
-                
-                cursor.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?", 
-                             (password_hash, salt, user_id))
-                
-                conn.commit()
-                conn.close()
-                return True, "Password reset successfully"
-            except Exception as e:
-                return False, f"Error resetting password: {str(e)}"
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            salt = secrets.token_hex(32)
+            password_hash = hashlib.sha256((new_password + salt).encode()).hexdigest()
+            
+            cursor.execute("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?", 
+                         (password_hash, salt, user_id))
+            
+            conn.commit()
+            conn.close()
+            return True, "Password reset successfully"
+        except Exception as e:
+            return False, f"Error resetting password: {str(e)}"
     
     def deactivate_user(self, user_id: int) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("UPDATE users SET is_active = 0 WHERE id = ?", (user_id,))
-                
-                conn.commit()
-                conn.close()
-                return True, "User deactivated successfully"
-            except Exception as e:
-                return False, f"Error deactivating user: {str(e)}"
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("UPDATE users SET is_active = 0 WHERE id = ?", (user_id,))
+            
+            conn.commit()
+            conn.close()
+            return True, "User deactivated successfully"
+        except Exception as e:
+            return False, f"Error deactivating user: {str(e)}"
     
     def activate_user(self, user_id: int) -> Tuple[bool, str]:
         # with db_lock:
-            try:
-                conn = self.db.get_connection()
-                cursor = conn.cursor()
-                
-                cursor.execute("UPDATE users SET is_active = 1 WHERE id = ?", (user_id,))
-                
-                conn.commit()
-                conn.close()
-                return True, "User activated successfully"
-            except Exception as e:
-                return False, f"Error activating user: {str(e)}"
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("UPDATE users SET is_active = 1 WHERE id = ?", (user_id,))
+            
+            conn.commit()
+            conn.close()
+            return True, "User activated successfully"
+        except Exception as e:
+            return False, f"Error activating user: {str(e)}"
 
 
 def init_services():
