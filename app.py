@@ -219,7 +219,7 @@ class DatabaseManager:
             raise
     
     def _init_database(self):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.get_connection()
                 cursor = conn.cursor()
@@ -469,7 +469,7 @@ class ConcurrencyManager:
         self.lock_timeout_minutes = 15
     
     def acquire_ticket_lock(self, ticket_id: int, user_name: str) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -503,7 +503,7 @@ class ConcurrencyManager:
                 return False, f"Error acquiring lock: {str(e)}"
     
     def release_ticket_lock(self, ticket_id: int, user_name: str):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -519,7 +519,7 @@ class ConcurrencyManager:
                 pass
     
     def check_ticket_lock_status(self, ticket_id: int) -> Dict:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -554,7 +554,7 @@ class AuthService:
     def create_session(self, user_id: int, ip_address: str = "", user_agent: str = "") -> str:
         session_id = str(uuid.uuid4())
     
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -571,7 +571,7 @@ class AuthService:
                 return ""
 
     def update_session_activity(self, session_id: str):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -649,7 +649,7 @@ class UserService:
         self.db = db_manager
     
     def get_all_users(self, include_inactive=False):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -690,7 +690,7 @@ class UserService:
                 return []
     
     def get_companies(self):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -712,7 +712,7 @@ class UserService:
                 return []
     
     def get_company_by_id(self, company_id):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -740,7 +740,7 @@ class TicketService:
         self.db = db_manager
     
     def get_all_tickets(self, user_id: int, permissions: Dict, user_name: str) -> List[Dict]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -786,7 +786,7 @@ class TicketService:
                 return []
     
     def get_ticket_by_id(self, ticket_id: int) -> Optional[Dict]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -821,7 +821,7 @@ class TicketService:
                 return None
     
     def get_ticket_history(self, ticket_id: int) -> List[Dict]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -848,7 +848,7 @@ class TicketService:
                 return []
     
     def get_ticket_updates(self, ticket_id: int) -> List[Dict]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -873,7 +873,7 @@ class TicketService:
                 return []
     
     def update_ticket_last_viewed(self, ticket_id: int, user_name: str):
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -889,7 +889,7 @@ class TicketService:
                 st.error(f"Error updating last viewed: {str(e)}")
     
     def update_ticket(self, ticket_id: int, ticket_data: Dict, user_name: str) -> bool:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -948,7 +948,7 @@ class TicketService:
                 return False
     
     def add_ticket_update(self, ticket_id: int, update_text: str, is_internal: bool, user_name: str) -> bool:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -987,7 +987,7 @@ class TicketService:
             return False
     
     def create_ticket(self, ticket_data: Dict, user_name: str) -> bool:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -1030,7 +1030,7 @@ class UserManagementService:
         self.db = db_manager
     
     def create_user(self, user_data: Dict, created_by: str) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -1069,7 +1069,7 @@ class UserManagementService:
                 return False, f"Error creating user: {str(e)}"
     
     def update_user(self, user_id: int, user_data: Dict) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -1097,7 +1097,7 @@ class UserManagementService:
                 return False, f"Error updating user: {str(e)}"
     
     def reset_password(self, user_id: int, new_password: str) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -1115,7 +1115,7 @@ class UserManagementService:
                 return False, f"Error resetting password: {str(e)}"
     
     def deactivate_user(self, user_id: int) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
@@ -1129,7 +1129,7 @@ class UserManagementService:
                 return False, f"Error deactivating user: {str(e)}"
     
     def activate_user(self, user_id: int) -> Tuple[bool, str]:
-        with db_lock:
+        # with db_lock:
             try:
                 conn = self.db.get_connection()
                 cursor = conn.cursor()
