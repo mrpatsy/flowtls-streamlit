@@ -1895,23 +1895,52 @@ def show_users_page():
                 phone = st.text_input("Phone", placeholder="Enter phone number")
                 company_name = st.selectbox("Company*", list(company_options.keys()))
             
+                        # Auto-populate permissions based on role
+            if role == "Admin":
+                default_permissions = {
+                    'can_create_users': True, 'can_deactivate_users': True,
+                    'can_reset_passwords': True, 'can_manage_tickets': True,
+                    'can_view_all_tickets': True, 'can_delete_tickets': True,
+                    'can_export_data': True
+                }
+            elif role == "Manager":
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': True, 'can_manage_tickets': True,
+                    'can_view_all_tickets': True, 'can_delete_tickets': False,
+                    'can_export_data': True
+                }
+            elif role == "Agent":
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': False, 'can_manage_tickets': True,
+                    'can_view_all_tickets': False, 'can_delete_tickets': False,
+                    'can_export_data': False
+                }
+            else:  # User
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': False, 'can_manage_tickets': False,
+                    'can_view_all_tickets': False, 'can_delete_tickets': False,
+                    'can_export_data': False
+                }
             st.subheader("Permissions")
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
-                can_create_users = st.checkbox("Create Users")
-                can_deactivate_users = st.checkbox("Deactivate Users")
-            
+                can_create_users = st.checkbox("Create Users", value=default_permissions['can_create_users'])
+                can_deactivate_users = st.checkbox("Deactivate Users", value=default_permissions['can_deactivate_users'])
+
             with col2:
-                can_reset_passwords = st.checkbox("Reset Passwords")
-                can_manage_tickets = st.checkbox("Manage Tickets")
-            
+                can_reset_passwords = st.checkbox("Reset Passwords", value=default_permissions['can_reset_passwords'])
+                can_manage_tickets = st.checkbox("Manage Tickets", value=default_permissions['can_manage_tickets'])
+
             with col3:
-                can_view_all_tickets = st.checkbox("View All Tickets")
-                can_delete_tickets = st.checkbox("Delete Tickets")
-            
+                can_view_all_tickets = st.checkbox("View All Tickets", value=default_permissions['can_view_all_tickets'])
+                can_delete_tickets = st.checkbox("Delete Tickets", value=default_permissions['can_delete_tickets'])
+
             with col4:
-                can_export_data = st.checkbox("Export Data")
+                can_export_data = st.checkbox("Export Data", value=default_permissions['can_export_data'])
             
             submitted = st.form_submit_button("Create User", use_container_width=True)
             
