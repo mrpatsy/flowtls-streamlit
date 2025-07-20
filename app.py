@@ -1274,31 +1274,71 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        if st.button(f"📊 {total_tickets}\nTotal Tickets", use_container_width=True, key="total_tickets"):
+        tile_clicked = st.button("", key="total_tickets_btn", use_container_width=True, 
+                                help="Click to view all tickets")
+        st.markdown(f'''
+        <div class="metric-card" style="margin-top: -3rem;">
+            <div class="metric-value">{total_tickets}</div>
+            <div class="metric-label">Total Tickets</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        if tile_clicked:
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        if st.button(f"🔴 {open_tickets}\nOpen", use_container_width=True, key="open_tickets"):
+        tile_clicked = st.button("", key="open_tickets_btn", use_container_width=True,
+                                help="Click to view open tickets")
+        st.markdown(f'''
+        <div class="metric-card" style="margin-top: -3rem;">
+            <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
+            <div class="metric-label">Open</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        if tile_clicked:
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        if st.button(f"🟡 {in_progress_tickets}\nIn Progress", use_container_width=True, key="progress_tickets"):
+        tile_clicked = st.button("", key="progress_tickets_btn", use_container_width=True,
+                                help="Click to view in progress tickets")
+        st.markdown(f'''
+        <div class="metric-card" style="margin-top: -3rem;">
+            <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
+            <div class="metric-label">In Progress</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        if tile_clicked:
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        if st.button(f"🟢 {resolved_tickets}\nResolved", use_container_width=True, key="resolved_tickets"):
+        tile_clicked = st.button("", key="resolved_tickets_btn", use_container_width=True,
+                                help="Click to view resolved tickets")
+        st.markdown(f'''
+        <div class="metric-card" style="margin-top: -3rem;">
+            <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
+            <div class="metric-label">Resolved</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        if tile_clicked:
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        if st.button(f"⚠️ {overdue_tickets}\nOverdue", use_container_width=True, key="overdue_tickets"):
+        tile_clicked = st.button("", key="overdue_tickets_btn", use_container_width=True,
+                                help="Click to view overdue tickets")
+        st.markdown(f'''
+        <div class="metric-card" style="margin-top: -3rem;">
+            <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
+            <div class="metric-label">Overdue</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        if tile_clicked:
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
