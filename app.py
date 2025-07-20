@@ -1879,50 +1879,6 @@ def show_users_page():
         companies = user_service.get_companies()
         company_options = {comp['company_name']: comp['company_id'] for comp in companies}
         
-        # Initialize session state for role if not exists
-        if 'selected_role' not in st.session_state:
-            st.session_state.selected_role = "User"
-        
-        # Role selection outside form to trigger updates
-        new_role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"], 
-                               index=["User", "Agent", "Manager", "Admin"].index(st.session_state.selected_role),
-                               key="role_selector")
-        
-        # Update session state if role changed
-        if new_role != st.session_state.selected_role:
-            st.session_state.selected_role = new_role
-            st.rerun()
-        
-        # Auto-populate permissions based on current role
-        if st.session_state.selected_role == "Admin":
-            default_permissions = {
-                'can_create_users': True, 'can_deactivate_users': True,
-                'can_reset_passwords': True, 'can_manage_tickets': True,
-                'can_view_all_tickets': True, 'can_delete_tickets': True,
-                'can_export_data': True
-            }
-        elif st.session_state.selected_role == "Manager":
-            default_permissions = {
-                'can_create_users': False, 'can_deactivate_users': False,
-                'can_reset_passwords': True, 'can_manage_tickets': True,
-                'can_view_all_tickets': True, 'can_delete_tickets': False,
-                'can_export_data': True
-            }
-        elif st.session_state.selected_role == "Agent":
-            default_permissions = {
-                'can_create_users': False, 'can_deactivate_users': False,
-                'can_reset_passwords': False, 'can_manage_tickets': True,
-                'can_view_all_tickets': False, 'can_delete_tickets': False,
-                'can_export_data': False
-            }
-        else:  # User
-            default_permissions = {
-                'can_create_users': False, 'can_deactivate_users': False,
-                'can_reset_passwords': False, 'can_manage_tickets': False,
-                'can_view_all_tickets': False, 'can_delete_tickets': False,
-                'can_export_data': False
-            }
-        
         with st.form("create_user_form"):
             col1, col2 = st.columns(2)
             
@@ -1934,27 +1890,55 @@ def show_users_page():
                 password = st.text_input("Password*", type="password", placeholder="Enter password")
             
             with col2:
-                # Display current role (for form submission)
-                st.info(f"Creating user with role: **{st.session_state.selected_role}**")
+                role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"])
                 department = st.text_input("Department", placeholder="Enter department")
                 phone = st.text_input("Phone", placeholder="Enter phone number")
                 company_name = st.selectbox("Company*", list(company_options.keys()))
             
-            st.subheader("Permissions (auto-populated based on role - you can override)")
+                        # Auto-populate permissions based on role
+            if role == "Admin":
+                default_permissions = {
+                    'can_create_users': True, 'can_deactivate_users': True,
+                    'can_reset_passwords': True, 'can_manage_tickets': True,
+                    'can_view_all_tickets': True, 'can_delete_tickets': True,
+                    'can_export_data': True
+                }
+            elif role == "Manager":
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': True, 'can_manage_tickets': True,
+                    'can_view_all_tickets': True, 'can_delete_tickets': False,
+                    'can_export_data': True
+                }
+            elif role == "Agent":
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': False, 'can_manage_tickets': True,
+                    'can_view_all_tickets': False, 'can_delete_tickets': False,
+                    'can_export_data': False
+                }
+            else:  # User
+                default_permissions = {
+                    'can_create_users': False, 'can_deactivate_users': False,
+                    'can_reset_passwords': False, 'can_manage_tickets': False,
+                    'can_view_all_tickets': False, 'can_delete_tickets': False,
+                    'can_export_data': False
+                }
+            st.subheader("Permissions")
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 can_create_users = st.checkbox("Create Users", value=default_permissions['can_create_users'])
                 can_deactivate_users = st.checkbox("Deactivate Users", value=default_permissions['can_deactivate_users'])
-            
+
             with col2:
                 can_reset_passwords = st.checkbox("Reset Passwords", value=default_permissions['can_reset_passwords'])
                 can_manage_tickets = st.checkbox("Manage Tickets", value=default_permissions['can_manage_tickets'])
-            
+
             with col3:
                 can_view_all_tickets = st.checkbox("View All Tickets", value=default_permissions['can_view_all_tickets'])
                 can_delete_tickets = st.checkbox("Delete Tickets", value=default_permissions['can_delete_tickets'])
-            
+
             with col4:
                 can_export_data = st.checkbox("Export Data", value=default_permissions['can_export_data'])
             
@@ -1968,7 +1952,7 @@ def show_users_page():
                         'password': password,
                         'first_name': first_name,
                         'last_name': last_name,
-                        'role': st.session_state.selected_role,  # Use session state role
+                        'role': role,
                         'department': department,
                         'phone': phone,
                         'company_id': company_options[company_name],
@@ -1985,8 +1969,6 @@ def show_users_page():
                     if success:
                         st.success("✅ User created successfully!")
                         st.balloons()
-                        # Reset role selection after successful creation
-                        st.session_state.selected_role = "User"
                     else:
                         st.error(f"❌ {message}")
                 else:
