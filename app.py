@@ -1274,71 +1274,61 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        tile_clicked = st.button("", key="total_tickets_btn", use_container_width=True, 
-                                help="Click to view all tickets")
-        st.markdown(f'''
-        <div class="metric-card" style="margin-top: -3rem;">
-            <div class="metric-value">{total_tickets}</div>
-            <div class="metric-label">Total Tickets</div>
+        clicked = st.button(f"""
+        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #1f2937; margin: 0.5rem 0;">{total_tickets}</div>
+            <div style="color: #6b7280; font-size: 0.9rem; font-weight: 500;">Total Tickets</div>
         </div>
-        ''', unsafe_allow_html=True)
-        if tile_clicked:
+        """, key="total_tickets_tile", help="Click to view all tickets", use_container_width=True)
+        if clicked:
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        tile_clicked = st.button("", key="open_tickets_btn", use_container_width=True,
-                                help="Click to view open tickets")
-        st.markdown(f'''
-        <div class="metric-card" style="margin-top: -3rem;">
-            <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
-            <div class="metric-label">Open</div>
+        clicked = st.button(f"""
+        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #dc2626; margin: 0.5rem 0;">{open_tickets}</div>
+            <div style="color: #6b7280; font-size: 0.9rem; font-weight: 500;">Open</div>
         </div>
-        ''', unsafe_allow_html=True)
-        if tile_clicked:
+        """, key="open_tickets_tile", help="Click to view open tickets", use_container_width=True)
+        if clicked:
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        tile_clicked = st.button("", key="progress_tickets_btn", use_container_width=True,
-                                help="Click to view in progress tickets")
-        st.markdown(f'''
-        <div class="metric-card" style="margin-top: -3rem;">
-            <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
-            <div class="metric-label">In Progress</div>
+        clicked = st.button(f"""
+        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #ca8a04; margin: 0.5rem 0;">{in_progress_tickets}</div>
+            <div style="color: #6b7280; font-size: 0.9rem; font-weight: 500;">In Progress</div>
         </div>
-        ''', unsafe_allow_html=True)
-        if tile_clicked:
+        """, key="progress_tickets_tile", help="Click to view in progress tickets", use_container_width=True)
+        if clicked:
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        tile_clicked = st.button("", key="resolved_tickets_btn", use_container_width=True,
-                                help="Click to view resolved tickets")
-        st.markdown(f'''
-        <div class="metric-card" style="margin-top: -3rem;">
-            <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
-            <div class="metric-label">Resolved</div>
+        clicked = st.button(f"""
+        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #059669; margin: 0.5rem 0;">{resolved_tickets}</div>
+            <div style="color: #6b7280; font-size: 0.9rem; font-weight: 500;">Resolved</div>
         </div>
-        ''', unsafe_allow_html=True)
-        if tile_clicked:
+        """, key="resolved_tickets_tile", help="Click to view resolved tickets", use_container_width=True)
+        if clicked:
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        tile_clicked = st.button("", key="overdue_tickets_btn", use_container_width=True,
-                                help="Click to view overdue tickets")
-        st.markdown(f'''
-        <div class="metric-card" style="margin-top: -3rem;">
-            <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
-            <div class="metric-label">Overdue</div>
+        clicked = st.button(f"""
+        <div style="text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid #e5e7eb; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); cursor: pointer;">
+            <div style="font-size: 2.5rem; font-weight: bold; color: #dc2626; margin: 0.5rem 0;">{overdue_tickets}</div>
+            <div style="color: #6b7280; font-size: 0.9rem; font-weight: 500;">Overdue</div>
         </div>
-        ''', unsafe_allow_html=True)
-        if tile_clicked:
+        """, key="overdue_tickets_tile", help="Click to view overdue tickets", use_container_width=True)
+        if clicked:
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
