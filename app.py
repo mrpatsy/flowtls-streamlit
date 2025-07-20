@@ -1879,25 +1879,36 @@ def show_users_page():
         companies = user_service.get_companies()
         company_options = {comp['company_name']: comp['company_id'] for comp in companies}
         
-        # Role selection OUTSIDE the form so it can trigger updates
-        role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"])
+        # Initialize session state for role if not exists
+        if 'selected_role' not in st.session_state:
+            st.session_state.selected_role = "User"
         
-        # Auto-populate permissions based on role
-        if role == "Admin":
+        # Role selection outside form to trigger updates
+        new_role = st.selectbox("Role*", ["User", "Agent", "Manager", "Admin"], 
+                               index=["User", "Agent", "Manager", "Admin"].index(st.session_state.selected_role),
+                               key="role_selector")
+        
+        # Update session state if role changed
+        if new_role != st.session_state.selected_role:
+            st.session_state.selected_role = new_role
+            st.rerun()
+        
+        # Auto-populate permissions based on current role
+        if st.session_state.selected_role == "Admin":
             default_permissions = {
                 'can_create_users': True, 'can_deactivate_users': True,
                 'can_reset_passwords': True, 'can_manage_tickets': True,
                 'can_view_all_tickets': True, 'can_delete_tickets': True,
                 'can_export_data': True
             }
-        elif role == "Manager":
+        elif st.session_state.selected_role == "Manager":
             default_permissions = {
                 'can_create_users': False, 'can_deactivate_users': False,
                 'can_reset_passwords': True, 'can_manage_tickets': True,
                 'can_view_all_tickets': True, 'can_delete_tickets': False,
                 'can_export_data': True
             }
-        elif role == "Agent":
+        elif st.session_state.selected_role == "Agent":
             default_permissions = {
                 'can_create_users': False, 'can_deactivate_users': False,
                 'can_reset_passwords': False, 'can_manage_tickets': True,
@@ -1923,13 +1934,13 @@ def show_users_page():
                 password = st.text_input("Password*", type="password", placeholder="Enter password")
             
             with col2:
-                # Show selected role (read-only)
-                st.text_input("Selected Role*", value=role, disabled=True)
+                # Display current role (for form submission)
+                st.info(f"Creating user with role: **{st.session_state.selected_role}**")
                 department = st.text_input("Department", placeholder="Enter department")
                 phone = st.text_input("Phone", placeholder="Enter phone number")
                 company_name = st.selectbox("Company*", list(company_options.keys()))
             
-            st.subheader("Permissions (auto-populated based on role)")
+            st.subheader("Permissions (auto-populated based on role - you can override)")
             col1, col2, col3, col4 = st.columns(4)
             
             with col1:
@@ -1957,7 +1968,7 @@ def show_users_page():
                         'password': password,
                         'first_name': first_name,
                         'last_name': last_name,
-                        'role': role,
+                        'role': st.session_state.selected_role,  # Use session state role
                         'department': department,
                         'phone': phone,
                         'company_id': company_options[company_name],
@@ -1974,6 +1985,8 @@ def show_users_page():
                     if success:
                         st.success("✅ User created successfully!")
                         st.balloons()
+                        # Reset role selection after successful creation
+                        st.session_state.selected_role = "User"
                     else:
                         st.error(f"❌ {message}")
                 else:
