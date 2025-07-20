@@ -1501,69 +1501,137 @@ def show_filtered_tickets_page():
     else:  # All
         filtered_tickets = tickets
     
-    st.subheader(f"Showing {len(filtered_tickets)} tickets")
-    
     if not filtered_tickets:
         st.info(f"No {filter_type.lower()} tickets found.")
         return
     
-    # Create a table-like display with action buttons
-    for ticket in filtered_tickets:
+    # Pagination controls at top
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
+    
+    # Initialize pagination state
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = 1
+    
+    total_pages = (len(filtered_tickets) - 1) // items_per_page + 1
+    start_idx = (st.session_state.current_page - 1) * items_per_page
+    end_idx = min(start_idx + items_per_page, len(filtered_tickets))
+    current_tickets = filtered_tickets[start_idx:end_idx]
+    
+    # Pagination info and controls
+    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
+    with col1:
+        st.write(f"Showing {start_idx + 1}-{end_idx} of {len(filtered_tickets)} tickets")
+    
+    with col2:
+        if st.button("⏮️ First", disabled=(st.session_state.current_page == 1)):
+            st.session_state.current_page = 1
+            st.rerun()
+    
+    with col3:
+        if st.button("◀️ Prev", disabled=(st.session_state.current_page == 1)):
+            st.session_state.current_page -= 1
+            st.rerun()
+    
+    with col4:
+        if st.button("Next ▶️", disabled=(st.session_state.current_page == total_pages)):
+            st.session_state.current_page += 1
+            st.rerun()
+    
+    with col5:
+        if st.button("Last ⏭️", disabled=(st.session_state.current_page == total_pages)):
+            st.session_state.current_page = total_pages
+            st.rerun()
+    
+    # Page number display
+    st.markdown(f"<div style='text-align: center; margin: 0.5rem 0;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
+    
+    # Compact table header
+    st.markdown("""
+    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
+        <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
+            <div>ID</div>
+            <div>Title</div>
+            <div>Priority</div>
+            <div>Status</div>
+            <div>Assigned</div>
+            <div>Company</div>
+            <div style="text-align: center;">Actions</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Compact ticket rows
+    for ticket in current_tickets:
         company = user_service.get_company_by_id(ticket['company_id'])
         company_name = company['company_name'] if company else ticket['company_id']
         
-        with st.container():
-            col1, col2, col3 = st.columns([6, 2, 2])
+        # Truncate title if too long
+        title_display = ticket['title'][:40] + '...' if len(ticket['title']) > 40 else ticket['title']
+        
+        # Status color mapping
+        status_colors = {
+            'Open': '#dc2626', 'In Progress': '#ca8a04', 
+            'Resolved': '#059669', 'Closed': '#6b7280'
+        }
+        priority_colors = {
+            'Critical': '#dc2626', 'High': '#ea580c', 
+            'Medium': '#ca8a04', 'Low': '#059669'
+        }
+        
+        overdue_badge = "⚠️" if ticket['is_overdue'] else ""
+        
+        # Create row with grid layout
+        st.markdown(f"""
+        <div style="background: white; padding: 0.75rem; border-radius: 0.5rem; margin: 0.25rem 0; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+            <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; align-items: center; font-size: 0.9rem;">
+                <div style="font-weight: bold; color: #3b82f6;">#{ticket['id']}</div>
+                <div style="color: #374151;">
+                    <div style="font-weight: 500;">{title_display}</div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem;">{ticket['description'][:60]}{'...' if len(ticket['description']) > 60 else ''}</div>
+                </div>
+                <div style="text-align: center;">
+                    <span style="background: {priority_colors.get(ticket['priority'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
+                        {ticket['priority']}
+                    </span>
+                </div>
+                <div style="text-align: center;">
+                    <span style="background: {status_colors.get(ticket['status'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
+                        {ticket['status']} {overdue_badge}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: #374151;">{ticket['assigned_to'][:15]}{'...' if len(ticket['assigned_to']) > 15 else ''}</div>
+                <div style="font-size: 0.85rem; color: #374151;">{company_name[:15]}{'...' if len(company_name) > 15 else ''}</div>
+                <div id="actions_{ticket['id']}" style="text-align: center;">
+                    <!-- Actions will be added here by Streamlit -->
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Action buttons in a compact row
+        col1, col2, col3, col4, col5, col6, col7 = st.columns([0.8, 2.5, 0.8, 0.8, 1, 1, 2])
+        with col7:  # Actions column
+            action_col1, action_col2, action_col3, action_col4 = st.columns(4)
             
-            # Ticket details
-            with col1:
-                if st.button(f"#{ticket['id']} - {ticket['title']}", key=f"filtered_ticket_{ticket['id']}", use_container_width=True):
+            with action_col1:
+                if st.button("👁️", key=f"view_{ticket['id']}", help="View Details"):
                     st.session_state.selected_ticket_id = ticket['id']
                     st.session_state.page = 'ticket_detail'
                     st.rerun()
-                
-                # Ticket metadata
-                col_a, col_b, col_c = st.columns(3)
-                with col_a:
-                    st.markdown(f'<span class="priority-{ticket["priority"].lower()}">{ticket["priority"]}</span>', unsafe_allow_html=True)
-                with col_b:
-                    st.markdown(f'<span class="status-{ticket["status"].lower().replace(" ", "-")}">{ticket["status"]}</span>', unsafe_allow_html=True)
-                with col_c:
-                    if ticket['is_overdue']:
-                        st.markdown('<span class="overdue-indicator">⚠️ OVERDUE</span>', unsafe_allow_html=True)
-                
-                # Description preview
-                description = ticket['description'][:100] + '...' if len(ticket['description']) > 100 else ticket['description']
-                st.caption(description)
-                
-                # Ticket info
-                st.caption(f"👤 {ticket['assigned_to']} | 🏢 {company_name} | 📅 {format_date(ticket['created_date'])}")
             
-            # Quick Actions
-            with col2:
-                st.markdown("**Quick Actions**")
-                
-                # Edit button (if user has permission)
+            with action_col2:
                 if st.session_state.user['permissions'].get('can_manage_tickets', False):
-                    if st.button("✏️ Edit", key=f"edit_{ticket['id']}", use_container_width=True):
+                    if st.button("✏️", key=f"edit_{ticket['id']}", help="Edit Ticket"):
                         st.session_state.selected_ticket_id = ticket['id']
                         st.session_state.page = 'ticket_detail'
                         st.rerun()
-                
-                # View details button
-                if st.button("👁️ View", key=f"view_{ticket['id']}", use_container_width=True):
-                    st.session_state.selected_ticket_id = ticket['id']
-                    st.session_state.page = 'ticket_detail'
-                    st.rerun()
             
-            # Status Actions
-            with col3:
-                st.markdown("**Status Actions**")
-                
+            with action_col3:
                 if st.session_state.user['permissions'].get('can_manage_tickets', False):
-                    # Quick status changes
                     if ticket['status'] == 'Open':
-                        if st.button("▶️ Start", key=f"start_{ticket['id']}", use_container_width=True):
+                        if st.button("▶️", key=f"start_{ticket['id']}", help="Start"):
                             ticket_data = {
                                 'title': ticket['title'], 'description': ticket['description'],
                                 'priority': ticket['priority'], 'status': 'In Progress',
@@ -1577,7 +1645,7 @@ def show_filtered_tickets_page():
                                 st.rerun()
                     
                     elif ticket['status'] == 'In Progress':
-                        if st.button("✅ Resolve", key=f"resolve_{ticket['id']}", use_container_width=True):
+                        if st.button("✅", key=f"resolve_{ticket['id']}", help="Resolve"):
                             ticket_data = {
                                 'title': ticket['title'], 'description': ticket['description'],
                                 'priority': ticket['priority'], 'status': 'Resolved',
@@ -1591,7 +1659,7 @@ def show_filtered_tickets_page():
                                 st.rerun()
                     
                     elif ticket['status'] == 'Resolved':
-                        if st.button("🔄 Reopen", key=f"reopen_{ticket['id']}", use_container_width=True):
+                        if st.button("🔄", key=f"reopen_{ticket['id']}", help="Reopen"):
                             ticket_data = {
                                 'title': ticket['title'], 'description': ticket['description'],
                                 'priority': ticket['priority'], 'status': 'Open',
@@ -1604,7 +1672,36 @@ def show_filtered_tickets_page():
                                 st.success("Ticket reopened!")
                                 st.rerun()
             
-            st.markdown("---")
+            with action_col4:
+                if st.session_state.user['permissions'].get('can_delete_tickets', False):
+                    if st.button("🗑️", key=f"delete_{ticket['id']}", help="Delete"):
+                        st.warning("Delete functionality not implemented yet")
+    
+    # Bottom pagination controls
+    st.markdown("---")
+    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
+    with col1:
+        st.write(f"Showing {start_idx + 1}-{end_idx} of {len(filtered_tickets)} tickets")
+    
+    with col2:
+        if st.button("⏮️ First", disabled=(st.session_state.current_page == 1), key="bottom_first"):
+            st.session_state.current_page = 1
+            st.rerun()
+    
+    with col3:
+        if st.button("◀️ Prev", disabled=(st.session_state.current_page == 1), key="bottom_prev"):
+            st.session_state.current_page -= 1
+            st.rerun()
+    
+    with col4:
+        if st.button("Next ▶️", disabled=(st.session_state.current_page == total_pages), key="bottom_next"):
+            st.session_state.current_page += 1
+            st.rerun()
+    
+    with col5:
+        if st.button("Last ⏭️", disabled=(st.session_state.current_page == total_pages), key="bottom_last"):
+            st.session_state.current_page = total_pages
+            st.rerun()
 
 def show_ticket_detail_page():
     if not require_auth():
