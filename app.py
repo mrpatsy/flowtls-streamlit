@@ -685,9 +685,9 @@ class UserService:
             conn.close()
             return users
                 
-            except Exception as e:
-                st.error(f"Error retrieving users: {str(e)}")
-                return []
+        except Exception as e:
+            st.error(f"Error retrieving users: {str(e)}")
+            return []
     
     def get_companies(self):
         # with db_lock:
