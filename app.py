@@ -1274,44 +1274,34 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div class="metric-value">{total_tickets}</div>
-            <div class="metric-label">Total Tickets</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    
+        if st.button(f"📊 {total_tickets}\nTotal Tickets", use_container_width=True, key="total_tickets"):
+            st.session_state.ticket_filter = "All"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+
     with col2:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
-            <div class="metric-label">Open</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    
+        if st.button(f"🔴 {open_tickets}\nOpen", use_container_width=True, key="open_tickets"):
+            st.session_state.ticket_filter = "Open"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+
     with col3:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
-            <div class="metric-label">In Progress</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    
+        if st.button(f"🟡 {in_progress_tickets}\nIn Progress", use_container_width=True, key="progress_tickets"):
+            st.session_state.ticket_filter = "In Progress"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+
     with col4:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
-            <div class="metric-label">Resolved</div>
-        </div>
-        ''', unsafe_allow_html=True)
-    
+        if st.button(f"🟢 {resolved_tickets}\nResolved", use_container_width=True, key="resolved_tickets"):
+            st.session_state.ticket_filter = "Resolved"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+
     with col5:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
-            <div class="metric-label">Overdue</div>
-        </div>
-        ''', unsafe_allow_html=True)
+        if st.button(f"⚠️ {overdue_tickets}\nOverdue", use_container_width=True, key="overdue_tickets"):
+            st.session_state.ticket_filter = "Overdue"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
     
     if tickets:
         col1, col2 = st.columns(2)
@@ -1463,6 +1453,142 @@ def show_tickets_page():
             st.markdown('</div>', unsafe_allow_html=True)
             st.markdown("---")
 
+def show_filtered_tickets_page():
+    if not require_auth():
+        return
+    
+    # Get filter from session state
+    filter_type = st.session_state.get('ticket_filter', 'All')
+    
+    # Header with back button
+    col1, col2 = st.columns([1, 10])
+    with col1:
+        if st.button("← Dashboard"):
+            st.session_state.page = 'dashboard'
+            st.rerun()
+    with col2:
+        st.title(f"🎫 {filter_type} Tickets")
+    
+    tickets = ticket_service.get_all_tickets(st.session_state.user['id'], 
+                                           st.session_state.user['permissions'], 
+                                           st.session_state.user['full_name'])
+    
+    # Apply filter
+    if filter_type == "Open":
+        filtered_tickets = [t for t in tickets if t['status'] == 'Open']
+    elif filter_type == "In Progress":
+        filtered_tickets = [t for t in tickets if t['status'] == 'In Progress']
+    elif filter_type == "Resolved":
+        filtered_tickets = [t for t in tickets if t['status'] == 'Resolved']
+    elif filter_type == "Overdue":
+        filtered_tickets = [t for t in tickets if t['is_overdue']]
+    else:  # All
+        filtered_tickets = tickets
+    
+    st.subheader(f"Showing {len(filtered_tickets)} tickets")
+    
+    if not filtered_tickets:
+        st.info(f"No {filter_type.lower()} tickets found.")
+        return
+    
+    # Create a table-like display with action buttons
+    for ticket in filtered_tickets:
+        company = user_service.get_company_by_id(ticket['company_id'])
+        company_name = company['company_name'] if company else ticket['company_id']
+        
+        with st.container():
+            col1, col2, col3 = st.columns([6, 2, 2])
+            
+            # Ticket details
+            with col1:
+                if st.button(f"#{ticket['id']} - {ticket['title']}", key=f"filtered_ticket_{ticket['id']}", use_container_width=True):
+                    st.session_state.selected_ticket_id = ticket['id']
+                    st.session_state.page = 'ticket_detail'
+                    st.rerun()
+                
+                # Ticket metadata
+                col_a, col_b, col_c = st.columns(3)
+                with col_a:
+                    st.markdown(f'<span class="priority-{ticket["priority"].lower()}">{ticket["priority"]}</span>', unsafe_allow_html=True)
+                with col_b:
+                    st.markdown(f'<span class="status-{ticket["status"].lower().replace(" ", "-")}">{ticket["status"]}</span>', unsafe_allow_html=True)
+                with col_c:
+                    if ticket['is_overdue']:
+                        st.markdown('<span class="overdue-indicator">⚠️ OVERDUE</span>', unsafe_allow_html=True)
+                
+                # Description preview
+                description = ticket['description'][:100] + '...' if len(ticket['description']) > 100 else ticket['description']
+                st.caption(description)
+                
+                # Ticket info
+                st.caption(f"👤 {ticket['assigned_to']} | 🏢 {company_name} | 📅 {format_date(ticket['created_date'])}")
+            
+            # Quick Actions
+            with col2:
+                st.markdown("**Quick Actions**")
+                
+                # Edit button (if user has permission)
+                if st.session_state.user['permissions'].get('can_manage_tickets', False):
+                    if st.button("✏️ Edit", key=f"edit_{ticket['id']}", use_container_width=True):
+                        st.session_state.selected_ticket_id = ticket['id']
+                        st.session_state.page = 'ticket_detail'
+                        st.rerun()
+                
+                # View details button
+                if st.button("👁️ View", key=f"view_{ticket['id']}", use_container_width=True):
+                    st.session_state.selected_ticket_id = ticket['id']
+                    st.session_state.page = 'ticket_detail'
+                    st.rerun()
+            
+            # Status Actions
+            with col3:
+                st.markdown("**Status Actions**")
+                
+                if st.session_state.user['permissions'].get('can_manage_tickets', False):
+                    # Quick status changes
+                    if ticket['status'] == 'Open':
+                        if st.button("▶️ Start", key=f"start_{ticket['id']}", use_container_width=True):
+                            ticket_data = {
+                                'title': ticket['title'], 'description': ticket['description'],
+                                'priority': ticket['priority'], 'status': 'In Progress',
+                                'assigned_to': ticket['assigned_to'], 'category': ticket['category'],
+                                'subcategory': ticket['subcategory'], 'tags': ticket['tags'],
+                                'estimated_hours': ticket['estimated_hours'], 'actual_hours': ticket['actual_hours'],
+                                'resolution': ticket['resolution']
+                            }
+                            if ticket_service.update_ticket(ticket['id'], ticket_data, st.session_state.user['full_name']):
+                                st.success("Ticket started!")
+                                st.rerun()
+                    
+                    elif ticket['status'] == 'In Progress':
+                        if st.button("✅ Resolve", key=f"resolve_{ticket['id']}", use_container_width=True):
+                            ticket_data = {
+                                'title': ticket['title'], 'description': ticket['description'],
+                                'priority': ticket['priority'], 'status': 'Resolved',
+                                'assigned_to': ticket['assigned_to'], 'category': ticket['category'],
+                                'subcategory': ticket['subcategory'], 'tags': ticket['tags'],
+                                'estimated_hours': ticket['estimated_hours'], 'actual_hours': ticket['actual_hours'],
+                                'resolution': ticket['resolution']
+                            }
+                            if ticket_service.update_ticket(ticket['id'], ticket_data, st.session_state.user['full_name']):
+                                st.success("Ticket resolved!")
+                                st.rerun()
+                    
+                    elif ticket['status'] == 'Resolved':
+                        if st.button("🔄 Reopen", key=f"reopen_{ticket['id']}", use_container_width=True):
+                            ticket_data = {
+                                'title': ticket['title'], 'description': ticket['description'],
+                                'priority': ticket['priority'], 'status': 'Open',
+                                'assigned_to': ticket['assigned_to'], 'category': ticket['category'],
+                                'subcategory': ticket['subcategory'], 'tags': ticket['tags'],
+                                'estimated_hours': ticket['estimated_hours'], 'actual_hours': ticket['actual_hours'],
+                                'resolution': ticket['resolution']
+                            }
+                            if ticket_service.update_ticket(ticket['id'], ticket_data, st.session_state.user['full_name']):
+                                st.success("Ticket reopened!")
+                                st.rerun()
+            
+            st.markdown("---")
 
 def show_ticket_detail_page():
     if not require_auth():
@@ -2247,6 +2373,8 @@ def main():
             show_dashboard()
         elif st.session_state.page == 'tickets':
             show_tickets_page()
+        elif st.session_state.page == 'filtered_tickets':
+            show_filtered_tickets_page()      
         elif st.session_state.page == 'ticket_detail':
             show_ticket_detail_page()
         elif st.session_state.page == 'create_ticket':
