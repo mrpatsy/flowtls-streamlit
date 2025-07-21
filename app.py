@@ -215,6 +215,7 @@ st.markdown("""
         border-color: #3b82f6;
         transform: translateY(-2px);
     }
+    /* Default button style - for action buttons and pagination */
     .stButton > button {
         background: rgba(55, 65, 81, 0.8) !important;
         border: 1px solid rgba(75, 85, 99, 0.5) !important;
@@ -227,6 +228,7 @@ st.markdown("""
         min-width: auto !important;
         width: auto !important;
         transition: all 0.2s ease !important;
+        margin: 0.125rem !important;
     }
 
     .stButton > button:hover {
@@ -245,37 +247,27 @@ st.markdown("""
         cursor: not-allowed !important;
         transform: none !important;
     }
-    /* Action buttons in ticket rows */
-    .stButton > button[data-testid*="baseButton"] {
-        background: rgba(55, 65, 81, 0.8) !important;
-        border: 1px solid rgba(75, 85, 99, 0.5) !important;
-        border-radius: 0.375rem !important;
-        padding: 0.375rem 0.75rem !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-        color: #e5e7eb !important;
-        font-weight: 500 !important;
-        font-size: 0.85rem !important;
-        min-width: auto !important;
-        width: auto !important;
-        transition: all 0.2s ease !important;
-        margin: 0.125rem !important;
-    }
 
-    .stButton > button[data-testid*="baseButton"]:hover {
-        background: rgba(75, 85, 99, 0.9) !important;
-        border-color: rgba(156, 163, 175, 0.7) !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-1px) !important;
+    /* Larger style for dashboard metric buttons and main action buttons */
+    .stButton > button[data-testid="baseButton-secondary"] {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 1px solid rgba(75, 85, 99, 0.7) !important;
+        border-radius: 0.75rem !important;
+        padding: 1.5rem 2rem !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
         color: #f3f4f6 !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
     }
 
-    .stButton > button[data-testid*="baseButton"]:disabled {
-        background: rgba(31, 41, 55, 0.3) !important;
-        border-color: rgba(55, 65, 81, 0.3) !important;
-        color: rgba(156, 163, 175, 0.5) !important;
-        box-shadow: none !important;
-        cursor: not-allowed !important;
-        transform: none !important;
+    .stButton > button[data-testid="baseButton-secondary"]:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+        border-color: rgba(156, 163, 175, 0.8) !important;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-2px) !important;
+        color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
