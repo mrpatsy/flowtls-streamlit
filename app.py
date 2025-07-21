@@ -1447,11 +1447,11 @@ def show_dashboard():
         if st.button(f"""
             {overdue_tickets}
 
-    Overdue
-    """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
-        st.session_state.ticket_filter = "Overdue"
-        st.session_state.page = 'filtered_tickets'
-        st.rerun()
+        Overdue
+        """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
+            st.session_state.ticket_filter = "Overdue"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
     
     if tickets:
         col1, col2 = st.columns(2)
