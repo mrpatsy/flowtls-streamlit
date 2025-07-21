@@ -1548,7 +1548,23 @@ def show_filtered_tickets_page():
     st.markdown(f"<div style='text-align: center; margin: 0.5rem 0;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
     
     # Compact table header
-    st.markdown("""
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([0.8, 2.5, 0.8, 0.8, 1, 1, 2])
+    with col1:
+        st.write("**ID**")
+    with col2:
+        st.write("**Title**")
+    with col3:
+        st.write("**Priority**")
+    with col4:
+        st.write("**Status**")
+    with col5:
+        st.write("**Assigned**")
+    with col6:
+        st.write("**Company**")
+    with col7:
+        st.write("**Actions**")
+    st.markdown("---")
+
     <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
         <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
             <div>ID</div>
