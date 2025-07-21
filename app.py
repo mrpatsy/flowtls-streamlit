@@ -1378,25 +1378,44 @@ def show_dashboard():
 # Add custom CSS just for these metric buttons
     st.markdown("""
     <style>
-    /* Apply to all buttons in the next 5 columns after this CSS */
+    /* Dashboard metric buttons - professional styling */
     div[data-testid="column"]:nth-child(1) button,
     div[data-testid="column"]:nth-child(2) button,
     div[data-testid="column"]:nth-child(3) button,
     div[data-testid="column"]:nth-child(4) button,
     div[data-testid="column"]:nth-child(5) button {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 2px solid rgba(75, 85, 99, 0.7) !important;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%) !important;
+        border: 2px solid #e5e7eb !important;
         border-radius: 1rem !important;
         padding: 2rem 1.5rem !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25) !important;
-        color: #f3f4f6 !important;
-        font-weight: 700 !important;
-        font-size: 1.2rem !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
-        line-height: 1.4 !important;
-        min-height: 120px !important;
-        white-space: pre-line !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+        color: #1f2937 !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif !important;
+        line-height: 1.5 !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        width: 100% !important;
+        min-height: 140px !important;
         text-align: center !important;
+        cursor: pointer !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        white-space: nowrap !important;
+    }
+
+    div[data-testid="column"]:nth-child(1) button:hover,
+    div[data-testid="column"]:nth-child(2) button:hover,
+    div[data-testid="column"]:nth-child(3) button:hover,
+    div[data-testid="column"]:nth-child(4) button:hover,
+    div[data-testid="column"]:nth-child(5) button:hover {
+        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15), 0 3px 10px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-2px) !important;
+        color: #1e40af !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -1404,51 +1423,31 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        if st.button(f"""
-        {total_tickets}
-
-        Total Tickets
-        """, key="metric_total", help="View all tickets", use_container_width=True):
+        if st.button(f"{total_tickets}\nTotal Tickets", key="metric_total", help="View all tickets", use_container_width=True):
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        if st.button(f"""
-        {open_tickets}
-
-        Open Tickets
-        """, key="metric_open", help="View open tickets", use_container_width=True):
+        if st.button(f"{open_tickets}\nOpen Tickets", key="metric_open", help="View open tickets", use_container_width=True):
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        if st.button(f"""
-        {in_progress_tickets}
-
-        In Progress
-        """, key="metric_progress", help="View in progress tickets", use_container_width=True):
+        if st.button(f"{in_progress_tickets}\nIn Progress", key="metric_progress", help="View in progress tickets", use_container_width=True):
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        if st.button(f"""
-        {resolved_tickets}
-
-        Resolved
-        """, key="metric_resolved", help="View resolved tickets", use_container_width=True):
+        if st.button(f"{resolved_tickets}\nResolved", key="metric_resolved", help="View resolved tickets", use_container_width=True):
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        if st.button(f"""
-            {overdue_tickets}
-
-        Overdue
-        """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
+        if st.button(f"{overdue_tickets}\nOverdue", key="metric_overdue", help="View overdue tickets", use_container_width=True):
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
