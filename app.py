@@ -1661,7 +1661,7 @@ def show_filtered_tickets_page():
     col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1.5, 0.5, 0.5, 1, 0.5, 0.5, 1])
 
     with col2:
-    items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
+        items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
 
     # Recalculate pagination when dropdown changes
     if items_per_page != 25:  # If user changed from default
