@@ -1655,7 +1655,6 @@ def show_filtered_tickets_page():
                     if st.button("🗑️", key=f"delete_{ticket['id']}", help="Delete"):
                         st.warning("Delete functionality not implemented yet")
     
-    # Bottom pagination controls
     # Bottom pagination controls - compact
     st.markdown("---")
     col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1.5, 0.5, 0.5, 1, 0.5, 0.5, 1])
@@ -1671,27 +1670,25 @@ def show_filtered_tickets_page():
         current_tickets = filtered_tickets[start_idx:end_idx]
 
     with col3:
-        if st.button("⏮️", disabled=(st.session_state.current_page == 1), key="first"):
-            st.session_state.current_page = 1
-            st.rerun()
+        st.button("⏮️", disabled=(st.session_state.current_page == 1), key="first", on_click=lambda: setattr(st.session_state, 'current_page', 1))
 
     with col4:
-        if st.button("◀️", disabled=(st.session_state.current_page == 1), key="prev"):
-            st.session_state.current_page -= 1
-            st.rerun()
+        if st.session_state.current_page > 1:
+            st.button("◀️", key="prev", on_click=lambda: setattr(st.session_state, 'current_page', st.session_state.current_page - 1))
+        else:
+            st.button("◀️", disabled=True, key="prev_disabled")
 
     with col5:
         st.write(f"Page {st.session_state.current_page} of {total_pages}")
 
     with col6:
-        if st.button("▶️", disabled=(st.session_state.current_page == total_pages), key="next"):
-            st.session_state.current_page += 1
-            st.rerun()
+        if st.session_state.current_page < total_pages:
+            st.button("▶️", key="next", on_click=lambda: setattr(st.session_state, 'current_page', st.session_state.current_page + 1))
+        else:
+            st.button("▶️", disabled=True, key="next_disabled")
 
     with col7:
-        if st.button("⏭️", disabled=(st.session_state.current_page == total_pages), key="last"):
-            st.session_state.current_page = total_pages
-            st.rerun()
+        st.button("⏭️", disabled=(st.session_state.current_page == total_pages), key="last", on_click=lambda: setattr(st.session_state, 'current_page', total_pages))
 
 def show_ticket_detail_page():
     if not require_auth():
