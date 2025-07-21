@@ -1375,13 +1375,23 @@ def show_dashboard():
     resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
+    # Custom CSS for hiding the button text but keeping functionality
+    st.markdown("""
+    <style>
+    .metric-button-hidden {
+        opacity: 0 !important;
+        position: absolute !important;
+        z-index: 10 !important;
+        width: 100% !important;
+        height: 120px !important;
+        cursor: pointer !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        if st.button("", key="metric_total", help="View all tickets"):
-            st.session_state.ticket_filter = "All"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
@@ -1395,22 +1405,18 @@ def show_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            top: -120px;
-            margin-bottom: -120px;
-        " onclick="document.querySelector('[data-testid=\\\"baseButton-secondary\\\"][title=\\\"View all tickets\\\"]').click()">
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{total_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Total Tickets</div>
         </div>
         """, unsafe_allow_html=True)
-
-    with col2:
-        if st.button("", key="metric_open", help="View open tickets"):
-            st.session_state.ticket_filter = "Open"
+        if st.button("Total Tickets", key="metric_total", help="View all tickets"):
+            st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+
+    with col2:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
@@ -1424,22 +1430,18 @@ def show_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            top: -120px;
-            margin-bottom: -120px;
-        " onclick="document.querySelector('[data-testid=\\\"baseButton-secondary\\\"][title=\\\"View open tickets\\\"]').click()">
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444;">{open_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Open Tickets</div>
         </div>
         """, unsafe_allow_html=True)
-
-    with col3:
-        if st.button("", key="metric_progress", help="View in progress tickets"):
-            st.session_state.ticket_filter = "In Progress"
+        if st.button("Open Tickets", key="metric_open", help="View open tickets"):
+            st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+
+    with col3:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
@@ -1453,22 +1455,18 @@ def show_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            top: -120px;
-            margin-bottom: -120px;
-        " onclick="document.querySelector('[data-testid=\\\"baseButton-secondary\\\"][title=\\\"View in progress tickets\\\"]').click()">
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #f59e0b;">{in_progress_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">In Progress</div>
         </div>
         """, unsafe_allow_html=True)
-
-    with col4:
-        if st.button("", key="metric_resolved", help="View resolved tickets"):
-            st.session_state.ticket_filter = "Resolved"
+        if st.button("In Progress", key="metric_progress", help="View in progress tickets"):
+            st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+
+    with col4:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
@@ -1482,22 +1480,18 @@ def show_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            top: -120px;
-            margin-bottom: -120px;
-        " onclick="document.querySelector('[data-testid=\\\"baseButton-secondary\\\"][title=\\\"View resolved tickets\\\"]').click()">
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #10b981;">{resolved_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Resolved</div>
         </div>
         """, unsafe_allow_html=True)
-
-    with col5:
-        if st.button("", key="metric_overdue", help="View overdue tickets"):
-            st.session_state.ticket_filter = "Overdue"
+        if st.button("Resolved", key="metric_resolved", help="View resolved tickets"):
+            st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+
+    with col5:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
@@ -1511,16 +1505,16 @@ def show_dashboard():
             display: flex;
             flex-direction: column;
             justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
-            top: -120px;
-            margin-bottom: -120px;
-        " onclick="document.querySelector('[data-testid=\\\"baseButton-secondary\\\"][title=\\\"View overdue tickets\\\"]').click()">
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444; animation: pulse 2s infinite;">{overdue_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Overdue</div>
         </div>
         """, unsafe_allow_html=True)
+        if st.button("Overdue", key="metric_overdue", help="View overdue tickets"):
+            st.session_state.ticket_filter = "Overdue"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
     
     if tickets:
         col1, col2 = st.columns(2)
