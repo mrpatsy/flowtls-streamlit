@@ -1375,6 +1375,32 @@ def show_dashboard():
     resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
+# Add custom CSS just for these metric buttons
+    st.markdown("""
+    <style>
+    /* Apply to all buttons in the next 5 columns after this CSS */
+    div[data-testid="column"]:nth-child(1) button,
+    div[data-testid="column"]:nth-child(2) button,
+    div[data-testid="column"]:nth-child(3) button,
+    div[data-testid="column"]:nth-child(4) button,
+    div[data-testid="column"]:nth-child(5) button {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 2px solid rgba(75, 85, 99, 0.7) !important;
+        border-radius: 1rem !important;
+        padding: 2rem 1.5rem !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25) !important;
+        color: #f3f4f6 !important;
+        font-weight: 700 !important;
+        font-size: 1.2rem !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+        line-height: 1.4 !important;
+        min-height: 120px !important;
+        white-space: pre-line !important;
+        text-align: center !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
@@ -1426,6 +1452,12 @@ def show_dashboard():
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+
+    Overdue
+    """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
+        st.session_state.ticket_filter = "Overdue"
+        st.session_state.page = 'filtered_tickets'
+        st.rerun()
     
     if tickets:
         col1, col2 = st.columns(2)
