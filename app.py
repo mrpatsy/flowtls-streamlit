@@ -1447,12 +1447,6 @@ def show_dashboard():
         if st.button(f"""
         {overdue_tickets}
 
-        Overdue
-        """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
-            st.session_state.ticket_filter = "Overdue"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
-
     Overdue
     """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
         st.session_state.ticket_filter = "Overdue"
@@ -1702,7 +1696,7 @@ def show_filtered_tickets_page():
         
         # Create row with grid layout
         st.markdown(f"""
-        <div style="background: white; padding: 0.75rem; border-radius: 0.5rem; margin: 0.25rem 0; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+            <div style="background: white; padding: 0.75rem; border-radius: 0.5rem; margin: 0.25rem 0; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
             <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; align-items: center; font-size: 0.9rem;">
                 <div style="font-weight: bold; color: #3b82f6;">#{ticket['id']}</div>
                 <div style="color: #374151;">
