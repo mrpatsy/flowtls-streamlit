@@ -1379,11 +1379,15 @@ def show_dashboard():
     resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
-# Add custom CSS just for these metric buttons
+# Add custom CSS just for metric buttons
     st.markdown("""
     <style>
-    /* Target ALL buttons in the dashboard */
-    .stButton > button {
+    /* Target only buttons with metric keys */
+    button[title="View all tickets"],
+    button[title="View open tickets"], 
+    button[title="View in progress tickets"],
+    button[title="View resolved tickets"],
+    button[title="View overdue tickets"] {
         background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%) !important;
         border: 2px solid #e5e7eb !important;
         border-radius: 1.5rem !important;
@@ -1392,17 +1396,10 @@ def show_dashboard():
         color: #1f2937 !important;
         font-weight: 800 !important;
         font-size: 2.5rem !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
         line-height: 1.2 !important;
         min-height: 200px !important;
         white-space: pre-line !important;
         text-align: center !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px) scale(1.02) !important;
-        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15) !important;
-        border-color: #3b82f6 !important;
     }
     </style>
     """, unsafe_allow_html=True)
