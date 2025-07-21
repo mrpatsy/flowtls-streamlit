@@ -1505,6 +1505,17 @@ def show_filtered_tickets_page():
         st.info(f"No {filter_type.lower()} tickets found.")
         return
     
+    # Initialize pagination state
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = 1
+
+    # Default items per page (will be controlled by dropdown at bottom)
+    items_per_page = 25
+    total_pages = (len(filtered_tickets) - 1) // items_per_page + 1 if len(filtered_tickets) > 0 else 1
+    start_idx = (st.session_state.current_page - 1) * items_per_page
+    end_idx = min(start_idx + items_per_page, len(filtered_tickets))
+    current_tickets = filtered_tickets[start_idx:end_idx]
+    
 # Initialize pagination state
     if 'current_page' not in st.session_state:
         st.session_state.current_page = 1
@@ -1650,10 +1661,14 @@ def show_filtered_tickets_page():
     col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1.5, 0.5, 0.5, 1, 0.5, 0.5, 1])
 
     with col2:
-        items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
+    items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
 
-    # Calculate pagination based on dropdown
-    total_pages = (len(filtered_tickets) - 1) // items_per_page + 1 if len(filtered_tickets) > 0 else 1
+    # Recalculate pagination when dropdown changes
+    if items_per_page != 25:  # If user changed from default
+        total_pages = (len(filtered_tickets) - 1) // items_per_page + 1 if len(filtered_tickets) > 0 else 1
+        start_idx = (st.session_state.current_page - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, len(filtered_tickets))
+        current_tickets = filtered_tickets[start_idx:end_idx]
 
     with col3:
         if st.button("⏮️", disabled=(st.session_state.current_page == 1), key="first"):
