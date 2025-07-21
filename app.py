@@ -1378,91 +1378,131 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        total_clicked = st.button("temp", key="metric-btn-all", help="View all tickets")
         st.markdown(f"""
-        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View all tickets\"]').click()">
+        <div style="
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid rgba(75, 85, 99, 0.7);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            color: #f3f4f6;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        " onclick="window.location.reload()">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{total_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Total Tickets</div>
         </div>
-        <style>
-        div[data-testid="column"]:nth-child(1) .stButton {{
-            display: none !important;
-        }}
-        </style>
         """, unsafe_allow_html=True)
-        if total_clicked:
+        if st.button("📊 View All", key="btn_all_tickets", use_container_width=True):
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        open_clicked = st.button("temp", key="metric-btn-open", help="View open tickets")
         st.markdown(f"""
-        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View open tickets\"]').click()">
+        <div style="
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid rgba(75, 85, 99, 0.7);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            color: #f3f4f6;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444;">{open_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Open Tickets</div>
         </div>
-        <style>
-        div[data-testid="column"]:nth-child(2) .stButton {{
-            display: none !important;
-        }}
-        </style>
         """, unsafe_allow_html=True)
-        if open_clicked:
+        if st.button("🔴 View Open", key="btn_open_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        progress_clicked = st.button("temp", key="metric-btn-progress", help="View in progress tickets")
         st.markdown(f"""
-        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View in progress tickets\"]').click()">
+        <div style="
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid rgba(75, 85, 99, 0.7);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            color: #f3f4f6;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #f59e0b;">{in_progress_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">In Progress</div>
         </div>
-        <style>
-        div[data-testid="column"]:nth-child(3) .stButton {{
-            display: none !important;
-        }}
-        </style>
         """, unsafe_allow_html=True)
-        if progress_clicked:
+        if st.button("🟡 View Progress", key="btn_progress_tickets", use_container_width=True):
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        resolved_clicked = st.button("temp", key="metric-btn-resolved", help="View resolved tickets")
         st.markdown(f"""
-        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View resolved tickets\"]').click()">
+        <div style="
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid rgba(75, 85, 99, 0.7);
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            color: #f3f4f6;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #10b981;">{resolved_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Resolved</div>
         </div>
-        <style>
-        div[data-testid="column"]:nth-child(4) .stButton {{
-            display: none !important;
-        }}
-        </style>
         """, unsafe_allow_html=True)
-        if resolved_clicked:
+        if st.button("🟢 View Resolved", key="btn_resolved_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        overdue_clicked = st.button("temp", key="metric-btn-overdue", help="View overdue tickets")
         st.markdown(f"""
-        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View overdue tickets\"]').click()" style="border-color: #ef4444 !important;">
+        <div style="
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border: 2px solid #ef4444;
+            border-radius: 1rem;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+            color: #f3f4f6;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
             <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444; animation: pulse 2s infinite;">{overdue_tickets}</div>
             <div style="font-size: 1rem; font-weight: 600;">Overdue</div>
         </div>
-        <style>
-        div[data-testid="column"]:nth-child(5) .stButton {{
-            display: none !important;
-        }}
-        </style>
         """, unsafe_allow_html=True)
-        if overdue_clicked:
+        if st.button("⚠️ View Overdue", key="btn_overdue_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
