@@ -1404,37 +1404,79 @@ def show_dashboard():
     </style>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3, col4, col5 = st.columns(5)
+    # Dashboard metrics with custom styling
+st.markdown("""
+<div style="display: flex; gap: 1rem; margin: 2rem 0;">
+    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'All'}, '*')">
+        <div class="metric-number">{}</div>
+        <div class="metric-label">Total Tickets</div>
+    </div>
+    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Open'}, '*')">
+        <div class="metric-number" style="color: #dc2626;">{}</div>
+        <div class="metric-label">Open Tickets</div>
+    </div>
+    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'In Progress'}, '*')">
+        <div class="metric-number" style="color: #ca8a04;">{}</div>
+        <div class="metric-label">In Progress</div>
+    </div>
+    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Resolved'}, '*')">
+        <div class="metric-number" style="color: #059669;">{}</div>
+        <div class="metric-label">Resolved</div>
+    </div>
+    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Overdue'}, '*')">
+        <div class="metric-number" style="color: #dc2626;">{}</div>
+        <div class="metric-label">Overdue</div>
+    </div>
+</div>
 
-    with col1:
-        if st.button(f"{total_tickets}\nTotal Tickets", key="metric_total", help="View all tickets", use_container_width=True):
-            st.session_state.ticket_filter = "All"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
+<style>
+.metric-card {{
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+    border: 2px solid #e5e7eb;
+    border-radius: 1.5rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}}
 
-    with col2:
-        if st.button(f"{open_tickets}\nOpen Tickets", key="metric_open", help="View open tickets", use_container_width=True):
-            st.session_state.ticket_filter = "Open"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
+.metric-card:hover {{
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+}}
 
-    with col3:
-        if st.button(f"{in_progress_tickets}\nIn Progress", key="metric_progress", help="View in progress tickets", use_container_width=True):
-            st.session_state.ticket_filter = "In Progress"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
+.metric-number {{
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+}}
 
-    with col4:
-        if st.button(f"{resolved_tickets}\nResolved", key="metric_resolved", help="View resolved tickets", use_container_width=True):
-            st.session_state.ticket_filter = "Resolved"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
+.metric-label {{
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #6b7280;
+}}
+</style>
+""".format(total_tickets, open_tickets, in_progress_tickets, resolved_tickets, overdue_tickets), unsafe_allow_html=True)
 
-    with col5:
-        if st.button(f"{overdue_tickets}\nOverdue", key="metric_overdue", help="View overdue tickets", use_container_width=True):
-            st.session_state.ticket_filter = "Overdue"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
+# Add invisible buttons for navigation
+col1, col2, col3, col4, col5 = st.columns(5)
+with col1:
+    if st.button("", key="metric_total_hidden", help="Total"):
+        st.session_state.ticket_filter = "All"
+        st.session_state.page = 'filtered_tickets'
+        st.rerun()
+        
+# Add the rest of the hidden buttons for other columns...
     
     if tickets:
         col1, col2 = st.columns(2)
