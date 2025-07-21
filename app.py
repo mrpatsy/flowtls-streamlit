@@ -1505,48 +1505,12 @@ def show_filtered_tickets_page():
         st.info(f"No {filter_type.lower()} tickets found.")
         return
     
-    # Pagination controls at top
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col2:
-        items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
-    
-    # Initialize pagination state
+# Initialize pagination state
     if 'current_page' not in st.session_state:
         st.session_state.current_page = 1
-    
-    total_pages = (len(filtered_tickets) - 1) // items_per_page + 1
-    start_idx = (st.session_state.current_page - 1) * items_per_page
-    end_idx = min(start_idx + items_per_page, len(filtered_tickets))
-    current_tickets = filtered_tickets[start_idx:end_idx]
-    
-    # Pagination info and controls
-    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
-    with col1:
-        st.write(f"Showing {start_idx + 1}-{end_idx} of {len(filtered_tickets)} tickets")
-    
-    with col2:
-        if st.button("⏮️ First", disabled=(st.session_state.current_page == 1)):
-            st.session_state.current_page = 1
-            st.rerun()
-    
-    with col3:
-        if st.button("◀️ Prev", disabled=(st.session_state.current_page == 1)):
-            st.session_state.current_page -= 1
-            st.rerun()
-    
-    with col4:
-        if st.button("Next ▶️", disabled=(st.session_state.current_page == total_pages)):
-            st.session_state.current_page += 1
-            st.rerun()
-    
-    with col5:
-        if st.button("Last ⏭️", disabled=(st.session_state.current_page == total_pages)):
-            st.session_state.current_page = total_pages
-            st.rerun()
-    
-    # Page number display
-    st.markdown(f"<div style='text-align: center; margin: 0.5rem 0;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
-    
+
+# Pagination will be handled at the bottom
+
     # Compact table header
     col1, col2, col3, col4, col5, col6, col7 = st.columns([0.8, 2.5, 0.8, 0.8, 1, 1, 2])
     with col1:
@@ -1681,28 +1645,36 @@ def show_filtered_tickets_page():
                         st.warning("Delete functionality not implemented yet")
     
     # Bottom pagination controls
+    # Bottom pagination controls - compact
     st.markdown("---")
-    col1, col2, col3, col4, col5 = st.columns([2, 1, 1, 1, 2])
-    with col1:
-        st.write(f"Showing {start_idx + 1}-{end_idx} of {len(filtered_tickets)} tickets")
-    
+    col1, col2, col3, col4, col5, col6, col7, col8 = st.columns([1, 1.5, 0.5, 0.5, 1, 0.5, 0.5, 1])
+
     with col2:
-        if st.button("⏮️ First", disabled=(st.session_state.current_page == 1), key="bottom_first"):
+        items_per_page = st.selectbox("Items per page", [10, 25, 50, 100], index=1, key="items_per_page")
+
+    # Calculate pagination based on dropdown
+    total_pages = (len(filtered_tickets) - 1) // items_per_page + 1 if len(filtered_tickets) > 0 else 1
+
+    with col3:
+        if st.button("⏮️", disabled=(st.session_state.current_page == 1), key="first"):
             st.session_state.current_page = 1
             st.rerun()
-    
-    with col3:
-        if st.button("◀️ Prev", disabled=(st.session_state.current_page == 1), key="bottom_prev"):
+
+    with col4:
+        if st.button("◀️", disabled=(st.session_state.current_page == 1), key="prev"):
             st.session_state.current_page -= 1
             st.rerun()
-    
-    with col4:
-        if st.button("Next ▶️", disabled=(st.session_state.current_page == total_pages), key="bottom_next"):
+
+    with col5:
+        st.write(f"Page {st.session_state.current_page} of {total_pages}")
+
+    with col6:
+        if st.button("▶️", disabled=(st.session_state.current_page == total_pages), key="next"):
             st.session_state.current_page += 1
             st.rerun()
-    
-    with col5:
-        if st.button("Last ⏭️", disabled=(st.session_state.current_page == total_pages), key="bottom_last"):
+
+    with col7:
+        if st.button("⏭️", disabled=(st.session_state.current_page == total_pages), key="last"):
             st.session_state.current_page = total_pages
             st.rerun()
 
