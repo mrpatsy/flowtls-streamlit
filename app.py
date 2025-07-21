@@ -269,6 +269,40 @@ st.markdown("""
         transform: translateY(-2px) !important;
         color: #ffffff !important;
     }
+    /* Large dashboard metric buttons ONLY - using specific container targeting */
+    div[data-testid="column"] .metric-button {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 2px solid rgba(75, 85, 99, 0.7) !important;
+        border-radius: 1rem !important;
+        padding: 2rem 1.5rem !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25) !important;
+        color: #f3f4f6 !important;
+        font-weight: 700 !important;
+        font-size: 1.2rem !important;
+        line-height: 1.4 !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        min-height: 120px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    div[data-testid="column"] .metric-button:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+        border-color: rgba(156, 163, 175, 0.9) !important;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-3px) scale(1.02) !important;
+        color: #ffffff !important;
+    }
+
+    /* Hide the actual streamlit buttons for metric cards */
+    .metric-button-hidden {
+        display: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1344,31 +1378,91 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        if st.button(f"**{total_tickets}**\n\nTotal Tickets", key="btn_all_tickets", use_container_width=True):
+        total_clicked = st.button("temp", key="metric-btn-all", help="View all tickets")
+        st.markdown(f"""
+        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View all tickets\"]').click()">
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{total_tickets}</div>
+            <div style="font-size: 1rem; font-weight: 600;">Total Tickets</div>
+        </div>
+        <style>
+        div[data-testid="column"]:nth-child(1) .stButton {{
+            display: none !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        if total_clicked:
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        if st.button(f"**{open_tickets}**\n\nOpen Tickets", key="btn_open_tickets", use_container_width=True):
+        open_clicked = st.button("temp", key="metric-btn-open", help="View open tickets")
+        st.markdown(f"""
+        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View open tickets\"]').click()">
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444;">{open_tickets}</div>
+            <div style="font-size: 1rem; font-weight: 600;">Open Tickets</div>
+        </div>
+        <style>
+        div[data-testid="column"]:nth-child(2) .stButton {{
+            display: none !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        if open_clicked:
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        if st.button(f"**{in_progress_tickets}**\n\nIn Progress", key="btn_progress_tickets", use_container_width=True):
+        progress_clicked = st.button("temp", key="metric-btn-progress", help="View in progress tickets")
+        st.markdown(f"""
+        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View in progress tickets\"]').click()">
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #f59e0b;">{in_progress_tickets}</div>
+            <div style="font-size: 1rem; font-weight: 600;">In Progress</div>
+        </div>
+        <style>
+        div[data-testid="column"]:nth-child(3) .stButton {{
+            display: none !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        if progress_clicked:
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        if st.button(f"**{resolved_tickets}**\n\nResolved", key="btn_resolved_tickets", use_container_width=True):
+        resolved_clicked = st.button("temp", key="metric-btn-resolved", help="View resolved tickets")
+        st.markdown(f"""
+        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View resolved tickets\"]').click()">
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #10b981;">{resolved_tickets}</div>
+            <div style="font-size: 1rem; font-weight: 600;">Resolved</div>
+        </div>
+        <style>
+        div[data-testid="column"]:nth-child(4) .stButton {{
+            display: none !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        if resolved_clicked:
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        if st.button(f"**{overdue_tickets}**\n\nOverdue", key="btn_overdue_tickets", use_container_width=True):
+        overdue_clicked = st.button("temp", key="metric-btn-overdue", help="View overdue tickets")
+        st.markdown(f"""
+        <div class="metric-button" onclick="document.querySelector('[data-testid=\"baseButton-secondary\"][aria-label=\"View overdue tickets\"]').click()" style="border-color: #ef4444 !important;">
+            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444; animation: pulse 2s infinite;">{overdue_tickets}</div>
+            <div style="font-size: 1rem; font-weight: 600;">Overdue</div>
+        </div>
+        <style>
+        div[data-testid="column"]:nth-child(5) .stButton {{
+            display: none !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        if overdue_clicked:
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
