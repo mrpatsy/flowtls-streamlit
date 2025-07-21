@@ -1382,12 +1382,12 @@ def show_dashboard():
 # Add custom CSS just for metric buttons
     st.markdown("""
     <style>
-    /* Target only buttons with metric keys */
-    button[title="View all tickets"],
-    button[title="View open tickets"], 
-    button[title="View in progress tickets"],
-    button[title="View resolved tickets"],
-    button[title="View overdue tickets"] {
+    /* Target buttons by their specific key attributes */
+    button[key="metric_total"],
+    button[key="metric_open"], 
+    button[key="metric_progress"],
+    button[key="metric_resolved"],
+    button[key="metric_overdue"] {
         background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%) !important;
         border: 2px solid #e5e7eb !important;
         border-radius: 1.5rem !important;
@@ -1403,7 +1403,7 @@ def show_dashboard():
     }
     </style>
     """, unsafe_allow_html=True)
-
+    
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
