@@ -1382,12 +1382,8 @@ def show_dashboard():
 # Add custom CSS just for these metric buttons
     st.markdown("""
     <style>
-    /* Apply to all buttons in the next 5 columns after this CSS */
-    div[data-testid="column"]:nth-child(1) button,
-    div[data-testid="column"]:nth-child(2) button,
-    div[data-testid="column"]:nth-child(3) button,
-    div[data-testid="column"]:nth-child(4) button,
-    div[data-testid="column"]:nth-child(5) button {
+    /* Target ALL buttons in the dashboard */
+    .stButton > button {
         background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%) !important;
         border: 2px solid #e5e7eb !important;
         border-radius: 1.5rem !important;
@@ -1403,11 +1399,7 @@ def show_dashboard():
         text-align: center !important;
     }
     
-    div[data-testid="column"]:nth-child(1) button:hover,
-    div[data-testid="column"]:nth-child(2) button:hover,
-    div[data-testid="column"]:nth-child(3) button:hover,
-    div[data-testid="column"]:nth-child(4) button:hover,
-    div[data-testid="column"]:nth-child(5) button:hover {
+    .stButton > button:hover {
         transform: translateY(-3px) scale(1.02) !important;
         box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15) !important;
         border-color: #3b82f6 !important;
