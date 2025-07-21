@@ -1826,7 +1826,7 @@ def show_ticket_detail_page():
                 <div class="update-box">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <span class="history-user">{update['created_by']}</span>
-                        <span style="font-size: 0.8rem;">{update_type} • {format_date(update['created_date'])}</span>
+                        <span style="font-size: 0.8rem;">{update_type} | {format_date(update['created_date'])}</span>
                     </div>
                     <div>{update['update_text']}</div>
                 </div>
