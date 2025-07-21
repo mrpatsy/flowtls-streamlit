@@ -1578,19 +1578,19 @@ def show_filtered_tickets_page():
     st.markdown(f"<div style='text-align: center; margin: 0.5rem 0;'>Page {st.session_state.current_page} of {total_pages}</div>", unsafe_allow_html=True)
     
     # Compact table header
-    st.markdown("""
-    # <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
-        # <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
-            # <div>ID</div>
-            # <div>Title</div>
-            # <div>Priority</div>
-            # <div>Status</div>
-            # <div>Assigned</div>
-            # <div>Company</div>
-            # <div style="text-align: center;">Actions</div>
-        # </div>
-    # </div>
-    # """, unsafe_allow_html=True)
+st.markdown("""
+<div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
+    <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
+        <div>ID</div>
+        <div>Title</div>
+        <div>Priority</div>
+        <div>Status</div>
+        <div>Assigned</div>
+        <div>Company</div>
+        <div style="text-align: center;">Actions</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
     
     # Compact ticket rows
     for ticket in current_tickets:
