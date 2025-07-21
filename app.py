@@ -1375,143 +1375,54 @@ def show_dashboard():
     resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
-    # Custom CSS for hiding the button text but keeping functionality
-    st.markdown("""
-    <style>
-    .metric-button-hidden {
-        opacity: 0 !important;
-        position: absolute !important;
-        z-index: 10 !important;
-        width: 100% !important;
-        height: 120px !important;
-        cursor: pointer !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            border: 2px solid rgba(75, 85, 99, 0.7);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            color: #f3f4f6;
-            text-align: center;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        ">
-            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{total_tickets}</div>
-            <div style="font-size: 1rem; font-weight: 600;">Total Tickets</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Total Tickets", key="metric_total", help="View all tickets"):
+        if st.button(f"""
+        {total_tickets}
+
+        Total Tickets
+        """, key="metric_total", help="View all tickets", use_container_width=True):
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            border: 2px solid rgba(75, 85, 99, 0.7);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            color: #f3f4f6;
-            text-align: center;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        ">
-            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444;">{open_tickets}</div>
-            <div style="font-size: 1rem; font-weight: 600;">Open Tickets</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Open Tickets", key="metric_open", help="View open tickets"):
+        if st.button(f"""
+        {open_tickets}
+
+        Open Tickets
+        """, key="metric_open", help="View open tickets", use_container_width=True):
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            border: 2px solid rgba(75, 85, 99, 0.7);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            color: #f3f4f6;
-            text-align: center;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        ">
-            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #f59e0b;">{in_progress_tickets}</div>
-            <div style="font-size: 1rem; font-weight: 600;">In Progress</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("In Progress", key="metric_progress", help="View in progress tickets"):
+        if st.button(f"""
+        {in_progress_tickets}
+
+        In Progress
+        """, key="metric_progress", help="View in progress tickets", use_container_width=True):
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            border: 2px solid rgba(75, 85, 99, 0.7);
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            color: #f3f4f6;
-            text-align: center;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        ">
-            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #10b981;">{resolved_tickets}</div>
-            <div style="font-size: 1rem; font-weight: 600;">Resolved</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Resolved", key="metric_resolved", help="View resolved tickets"):
+        if st.button(f"""
+        {resolved_tickets}
+
+        Resolved
+        """, key="metric_resolved", help="View resolved tickets", use_container_width=True):
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        st.markdown(f"""
-        <div style="
-            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-            border: 2px solid #ef4444;
-            border-radius: 1rem;
-            padding: 2rem 1.5rem;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-            color: #f3f4f6;
-            text-align: center;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        ">
-            <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #ef4444; animation: pulse 2s infinite;">{overdue_tickets}</div>
-            <div style="font-size: 1rem; font-weight: 600;">Overdue</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Overdue", key="metric_overdue", help="View overdue tickets"):
+        if st.button(f"""
+        {overdue_tickets}
+
+        Overdue
+        """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
