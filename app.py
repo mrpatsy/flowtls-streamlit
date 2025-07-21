@@ -1469,7 +1469,7 @@ def show_dashboard():
     """, unsafe_allow_html=True)
 
 # Add invisible buttons for navigation
-col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         if st.button("", key="metric_total_hidden", help="Total"):
             st.session_state.ticket_filter = "All"
