@@ -215,6 +215,18 @@ st.markdown("""
         border-color: #3b82f6;
         transform: translateY(-2px);
     }
+    .stButton > button {
+    background: transparent !important;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem !important;
+    box-shadow: none !important;
+    color: #1f2937;
+    font-weight: normal;
+    font-size: 0.9rem;
+    min-width: auto !important;
+    width: auto !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
