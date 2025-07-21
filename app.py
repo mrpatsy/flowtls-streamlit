@@ -1288,63 +1288,63 @@ def show_dashboard():
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
     col1, col2, col3, col4, col5 = st.columns(5)
-    
     with col1:
         st.markdown(f"""
-        <div class="metric-card" onclick="window.location.reload()">
+        <div class="metric-card" style="cursor: pointer;">
             <div class="metric-value">{total_tickets}</div>
             <div class="metric-label">Total Tickets</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("View All", key="btn_all_tickets", use_container_width=True):
+        # Invisible button that covers the entire column
+        if st.button("", key="btn_all_tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card" style="cursor: pointer;">
             <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
             <div class="metric-label">Open Tickets</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("View Open", key="btn_open_tickets", use_container_width=True):
+        if st.button("", key="btn_open_tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card" style="cursor: pointer;">
             <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
             <div class="metric-label">In Progress</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("View Progress", key="btn_progress_tickets", use_container_width=True):
+        if st.button("", key="btn_progress_tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card" style="cursor: pointer;">
             <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
             <div class="metric-label">Resolved</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("View Resolved", key="btn_resolved_tickets", use_container_width=True):
+        if st.button("", key="btn_resolved_tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
         st.markdown(f"""
-        <div class="metric-card">
+        <div class="metric-card" style="cursor: pointer;">
             <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
             <div class="metric-label">Overdue</div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("View Overdue", key="btn_overdue_tickets", use_container_width=True):
+        if st.button("", key="btn_overdue_tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
@@ -1579,18 +1579,18 @@ def show_filtered_tickets_page():
     
     # Compact table header
     st.markdown("""
-    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
-        <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
-            <div>ID</div>
-            <div>Title</div>
-            <div>Priority</div>
-            <div>Status</div>
-            <div>Assigned</div>
-            <div>Company</div>
-            <div style="text-align: center;">Actions</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; margin: 1rem 0; border: 1px solid #e5e7eb;">
+        # <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; font-weight: bold; color: #374151; align-items: center;">
+            # <div>ID</div>
+            # <div>Title</div>
+            # <div>Priority</div>
+            # <div>Status</div>
+            # <div>Assigned</div>
+            # <div>Company</div>
+            # <div style="text-align: center;">Actions</div>
+        # </div>
+    # </div>
+    # """, unsafe_allow_html=True)
     
     # Compact ticket rows
     for ticket in current_tickets:
