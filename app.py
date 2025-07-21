@@ -1470,16 +1470,16 @@ def show_dashboard():
 
 # Add invisible buttons for navigation
 col1, col2, col3, col4, col5 = st.columns(5)
-with col1:
-    if st.button("", key="metric_total_hidden", help="Total"):
-        st.session_state.ticket_filter = "All"
-        st.session_state.page = 'filtered_tickets'
-        st.rerun()
+    with col1:
+        if st.button("", key="metric_total_hidden", help="Total"):
+            st.session_state.ticket_filter = "All"
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+            
+    # Add the rest of the hidden buttons for other columns...
         
-# Add the rest of the hidden buttons for other columns...
-    
-    if tickets:
-        col1, col2 = st.columns(2)
+        if tickets:
+            col1, col2 = st.columns(2)
         
         with col1:
             st.subheader("📊 Tickets by Status")
