@@ -1405,68 +1405,68 @@ def show_dashboard():
     """, unsafe_allow_html=True)
     
     # Dashboard metrics with custom styling
-st.markdown("""
-<div style="display: flex; gap: 1rem; margin: 2rem 0;">
-    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'All'}, '*')">
-        <div class="metric-number">{}</div>
-        <div class="metric-label">Total Tickets</div>
+    st.markdown(f"""
+    <div style="display: flex; gap: 1rem; margin: 2rem 0;">
+        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'All'}}, '*')">
+            <div class="metric-number">{total_tickets}</div>
+            <div class="metric-label">Total Tickets</div>
+        </div>
+        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Open'}}, '*')">
+            <div class="metric-number" style="color: #dc2626;">{open_tickets}</div>
+            <div class="metric-label">Open Tickets</div>
+        </div>
+        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'In Progress'}}, '*')">
+            <div class="metric-number" style="color: #ca8a04;">{in_progress_tickets}</div>
+            <div class="metric-label">In Progress</div>
+        </div>
+        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Resolved'}}, '*')">
+            <div class="metric-number" style="color: #059669;">{resolved_tickets}</div>
+            <div class="metric-label">Resolved</div>
+        </div>
+        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Overdue'}}, '*')">
+            <div class="metric-number" style="color: #dc2626;">{overdue_tickets}</div>
+            <div class="metric-label">Overdue</div>
+        </div>
     </div>
-    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Open'}, '*')">
-        <div class="metric-number" style="color: #dc2626;">{}</div>
-        <div class="metric-label">Open Tickets</div>
-    </div>
-    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'In Progress'}, '*')">
-        <div class="metric-number" style="color: #ca8a04;">{}</div>
-        <div class="metric-label">In Progress</div>
-    </div>
-    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Resolved'}, '*')">
-        <div class="metric-number" style="color: #059669;">{}</div>
-        <div class="metric-label">Resolved</div>
-    </div>
-    <div class="metric-card" onclick="window.parent.postMessage({type: 'streamlit:setComponentValue', value: 'Overdue'}, '*')">
-        <div class="metric-number" style="color: #dc2626;">{}</div>
-        <div class="metric-label">Overdue</div>
-    </div>
-</div>
 
-<style>
-.metric-card {{
-    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
-    border: 2px solid #e5e7eb;
-    border-radius: 1.5rem;
-    padding: 3rem 2rem;
-    text-align: center;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex: 1;
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}}
+    <style>
+    .metric-card {{
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+        border: 2px solid #e5e7eb;
+        border-radius: 1.5rem;
+        padding: 3rem 2rem;
+        text-align: center;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }}
 
-.metric-card:hover {{
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
-    border-color: #3b82f6;
-}}
+    .metric-card:hover {{
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+    }}
 
-.metric-number {{
-    font-size: 3.5rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 0.5rem;
-    color: #1f2937;
-}}
+    .metric-number {{
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+    }}
 
-.metric-label {{
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #6b7280;
-}}
-</style>
-""".format(total_tickets, open_tickets, in_progress_tickets, resolved_tickets, overdue_tickets), unsafe_allow_html=True)
+    .metric-label {{
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #6b7280;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 
 # Add invisible buttons for navigation
 col1, col2, col3, col4, col5 = st.columns(5)
