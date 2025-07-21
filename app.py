@@ -1382,7 +1382,7 @@ def show_dashboard():
 # Add custom CSS just for these metric buttons
     st.markdown("""
     <style>
-    /* Dashboard metric buttons - large professional styling */
+    /* Apply to all buttons in the next 5 columns after this CSS */
     div[data-testid="column"]:nth-child(1) button,
     div[data-testid="column"]:nth-child(2) button,
     div[data-testid="column"]:nth-child(3) button,
@@ -1392,47 +1392,25 @@ def show_dashboard():
         border: 2px solid #e5e7eb !important;
         border-radius: 1.5rem !important;
         padding: 3rem 2rem !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08) !important;
         color: #1f2937 !important;
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif !important;
-        line-height: 1.4 !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        width: 100% !important;
-        min-height: 180px !important;
+        font-weight: 800 !important;
+        font-size: 2.5rem !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+        line-height: 1.2 !important;
+        min-height: 200px !important;
+        white-space: pre-line !important;
         text-align: center !important;
-        cursor: pointer !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-        white-space: nowrap !important;
     }
-
+    
     div[data-testid="column"]:nth-child(1) button:hover,
     div[data-testid="column"]:nth-child(2) button:hover,
     div[data-testid="column"]:nth-child(3) button:hover,
     div[data-testid="column"]:nth-child(4) button:hover,
     div[data-testid="column"]:nth-child(5) button:hover {
-        background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
-        border-color: #3b82f6 !important;
-        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.2), 0 4px 15px rgba(0, 0, 0, 0.1) !important;
         transform: translateY(-3px) scale(1.02) !important;
-        color: #1e40af !important;
-    }
-
-    /* Large numbers styling */
-    div[data-testid="column"]:nth-child(1) button .metric-number,
-    div[data-testid="column"]:nth-child(2) button .metric-number,
-    div[data-testid="column"]:nth-child(3) button .metric-number,
-    div[data-testid="column"]:nth-child(4) button .metric-number,
-    div[data-testid="column"]:nth-child(5) button .metric-number {
-        font-size: 3.5rem !important;
-        font-weight: 800 !important;
-        line-height: 1 !important;
-        margin-bottom: 0.5rem !important;
-        color: #1f2937 !important;
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15) !important;
+        border-color: #3b82f6 !important;
     }
     </style>
     """, unsafe_allow_html=True)
