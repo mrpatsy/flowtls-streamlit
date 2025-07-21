@@ -1288,63 +1288,33 @@ def show_dashboard():
     overdue_tickets = len([t for t in tickets if t['is_overdue']])
     
     col1, col2, col3, col4, col5 = st.columns(5)
+
     with col1:
-        st.markdown(f"""
-        <div class="metric-card" style="cursor: pointer;">
-            <div class="metric-value">{total_tickets}</div>
-            <div class="metric-label">Total Tickets</div>
-        </div>
-        """, unsafe_allow_html=True)
-        # Invisible button that covers the entire column
-        if st.button("", key="btn_all_tickets", label_visibility="hidden"):
+        if st.button(f"**{total_tickets}**\n\nTotal Tickets", key="btn_all_tickets", use_container_width=True):
             st.session_state.ticket_filter = "All"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col2:
-        st.markdown(f"""
-        <div class="metric-card" style="cursor: pointer;">
-            <div class="metric-value" style="color: #dc2626;">{open_tickets}</div>
-            <div class="metric-label">Open Tickets</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("", key="btn_open_tickets", label_visibility="hidden"):
+        if st.button(f"**{open_tickets}**\n\nOpen Tickets", key="btn_open_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Open"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col3:
-        st.markdown(f"""
-        <div class="metric-card" style="cursor: pointer;">
-            <div class="metric-value" style="color: #ca8a04;">{in_progress_tickets}</div>
-            <div class="metric-label">In Progress</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("", key="btn_progress_tickets", label_visibility="hidden"):
+        if st.button(f"**{in_progress_tickets}**\n\nIn Progress", key="btn_progress_tickets", use_container_width=True):
             st.session_state.ticket_filter = "In Progress"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col4:
-        st.markdown(f"""
-        <div class="metric-card" style="cursor: pointer;">
-            <div class="metric-value" style="color: #059669;">{resolved_tickets}</div>
-            <div class="metric-label">Resolved</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("", key="btn_resolved_tickets", label_visibility="hidden"):
+        if st.button(f"**{resolved_tickets}**\n\nResolved", key="btn_resolved_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Resolved"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
 
     with col5:
-        st.markdown(f"""
-        <div class="metric-card" style="cursor: pointer;">
-            <div class="metric-value" style="color: #dc2626;">{overdue_tickets}</div>
-            <div class="metric-label">Overdue</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("", key="btn_overdue_tickets", label_visibility="hidden"):
+        if st.button(f"**{overdue_tickets}**\n\nOverdue", key="btn_overdue_tickets", use_container_width=True):
             st.session_state.ticket_filter = "Overdue"
             st.session_state.page = 'filtered_tickets'
             st.rerun()
