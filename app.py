@@ -1272,6 +1272,10 @@ if 'page' not in st.session_state:
     st.session_state.page = 'login'
 if 'selected_ticket_id' not in st.session_state:
     st.session_state.selected_ticket_id = None
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = 1
+if 'ticket_filter' not in st.session_state:
+    st.session_state.ticket_filter = 'All'
 
 
 def require_auth(permission: str = None) -> bool:
@@ -1662,11 +1666,6 @@ def show_filtered_tickets_page():
     end_idx = min(start_idx + items_per_page, len(filtered_tickets))
     current_tickets = filtered_tickets[start_idx:end_idx]
     
-# Initialize pagination state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = 1
-
-# Pagination will be handled at the bottom
 
     # Compact table header
     col1, col2, col3, col4, col5, col6, col7 = st.columns([0.8, 2.5, 0.8, 0.8, 1, 1, 2])
