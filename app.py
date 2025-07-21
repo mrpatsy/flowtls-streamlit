@@ -216,16 +216,34 @@ st.markdown("""
         transform: translateY(-2px);
     }
     .stButton > button {
-    background: transparent !important;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.25rem;
-    padding: 0.25rem 0.5rem !important;
-    box-shadow: none !important;
-    color: #1f2937;
-    font-weight: normal;
-    font-size: 0.9rem;
-    min-width: auto !important;
-    width: auto !important;
+        background: rgba(55, 65, 81, 0.8) !important;
+        border: 1px solid rgba(75, 85, 99, 0.5) !important;
+        border-radius: 0.375rem !important;
+        padding: 0.5rem 1rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        color: #e5e7eb !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+        min-width: auto !important;
+        width: auto !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .stButton > button:hover {
+        background: rgba(75, 85, 99, 0.9) !important;
+        border-color: rgba(156, 163, 175, 0.7) !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-1px) !important;
+        color: #f3f4f6 !important;
+    }
+
+    .stButton > button:disabled {
+        background: rgba(31, 41, 55, 0.3) !important;
+        border-color: rgba(55, 65, 81, 0.3) !important;
+        color: rgba(156, 163, 175, 0.5) !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+        transform: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
