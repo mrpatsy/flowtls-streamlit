@@ -1445,7 +1445,7 @@ def show_dashboard():
 
     with col5:
         if st.button(f"""
-        {overdue_tickets}
+            {overdue_tickets}
 
     Overdue
     """, key="metric_overdue", help="View overdue tickets", use_container_width=True):
