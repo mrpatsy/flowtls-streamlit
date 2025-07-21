@@ -245,6 +245,38 @@ st.markdown("""
         cursor: not-allowed !important;
         transform: none !important;
     }
+    /* Action buttons in ticket rows */
+    .stButton > button[data-testid*="baseButton"] {
+        background: rgba(55, 65, 81, 0.8) !important;
+        border: 1px solid rgba(75, 85, 99, 0.5) !important;
+        border-radius: 0.375rem !important;
+        padding: 0.375rem 0.75rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        color: #e5e7eb !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+        min-width: auto !important;
+        width: auto !important;
+        transition: all 0.2s ease !important;
+        margin: 0.125rem !important;
+    }
+
+    .stButton > button[data-testid*="baseButton"]:hover {
+        background: rgba(75, 85, 99, 0.9) !important;
+        border-color: rgba(156, 163, 175, 0.7) !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-1px) !important;
+        color: #f3f4f6 !important;
+    }
+
+    .stButton > button[data-testid*="baseButton"]:disabled {
+        background: rgba(31, 41, 55, 0.3) !important;
+        border-color: rgba(55, 65, 81, 0.3) !important;
+        color: rgba(156, 163, 175, 0.5) !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
