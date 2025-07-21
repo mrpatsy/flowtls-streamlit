@@ -1640,8 +1640,8 @@ def show_filtered_tickets_page():
         return
     
     # Initialize pagination state
-    if 'current_page' not in st.session_state:
-        st.session_state.current_page = 1
+    # if 'current_page' not in st.session_state:
+        # st.session_state.current_page = 1
 
     # Default items per page (will be controlled by dropdown at bottom)
     items_per_page = 25
@@ -1697,29 +1697,29 @@ def show_filtered_tickets_page():
         # Create row with grid layout
         st.markdown(f"""
             <div style="background: white; padding: 0.75rem; border-radius: 0.5rem; margin: 0.25rem 0; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
-            <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; align-items: center; font-size: 0.9rem;">
-                <div style="font-weight: bold; color: #3b82f6;">#{ticket['id']}</div>
-                <div style="color: #374151;">
-                    <div style="font-weight: 500;">{title_display}</div>
-                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem;">{ticket['description'][:60]}{'...' if len(ticket['description']) > 60 else ''}</div>
-                </div>
-                <div style="text-align: center;">
-                    <span style="background: {priority_colors.get(ticket['priority'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
-                        {ticket['priority']}
-                    </span>
-                </div>
-                <div style="text-align: center;">
-                    <span style="background: {status_colors.get(ticket['status'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
-                        {ticket['status']} {overdue_badge}
-                    </span>
-                </div>
-                <div style="font-size: 0.85rem; color: #374151;">{ticket['assigned_to'][:15]}{'...' if len(ticket['assigned_to']) > 15 else ''}</div>
-                <div style="font-size: 0.85rem; color: #374151;">{company_name[:15]}{'...' if len(company_name) > 15 else ''}</div>
-                <div id="actions_{ticket['id']}" style="text-align: center;">
-                    <!-- Actions will be added here by Streamlit -->
+                <div style="display: grid; grid-template-columns: 0.8fr 2.5fr 0.8fr 0.8fr 1fr 1fr 2fr; gap: 1rem; align-items: center; font-size: 0.9rem;">
+                    <div style="font-weight: bold; color: #3b82f6;">#{ticket['id']}</div>
+                    <div style="color: #374151;">
+                        <div style="font-weight: 500;">{title_display}</div>
+                        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.2rem;">{ticket['description'][:60]}{'...' if len(ticket['description']) > 60 else ''}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="background: {priority_colors.get(ticket['priority'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
+                            {ticket['priority']}
+                        </span>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="background: {status_colors.get(ticket['status'], '#6b7280')}; color: white; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: bold;">
+                            {ticket['status']} {overdue_badge}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #374151;">{ticket['assigned_to'][:15]}{'...' if len(ticket['assigned_to']) > 15 else ''}</div>
+                    <div style="font-size: 0.85rem; color: #374151;">{company_name[:15]}{'...' if len(company_name) > 15 else ''}</div>
+                    <div id="actions_{ticket['id']}" style="text-align: center;">
+                        <!-- Actions will be added here by Streamlit -->
+                    </div>
                 </div>
             </div>
-        </div>
         """, unsafe_allow_html=True)
         
         # Action buttons in a compact row
