@@ -1509,60 +1509,43 @@ def show_dashboard():
         
         with col1:
             st.subheader("📊 Tickets by Status")
-            st.subheader("📊 Dashboard Analytics")
+st.subheader("📊 Ticket Overview")
 
-            # First chart - full width pie chart
-            st.markdown("### Tickets by Status")
-            status_data = pd.DataFrame(tickets)['status'].value_counts()
-            fig = px.pie(
-                values=status_data.values,
-                names=status_data.index,
-                title="Ticket Distribution by Status",
-                color_discrete_map={
-                    'Open': '#dc2626',
-                    'In Progress': '#ca8a04', 
-                    'Resolved': '#059669',
-                    'Closed': '#6b7280'
-                }
-            )
-            fig.update_layout(
-                height=500,
-                font=dict(size=16),
-                title_font_size=20,
-                margin=dict(t=80, b=80, l=80, r=80),
-                showlegend=True,
-                legend=dict(font=dict(size=14))
-            )
-            fig.update_traces(textfont_size=14, textinfo='label+percent')
-            st.plotly_chart(fig, use_container_width=True)
+# Create a simple visual summary instead of complex charts
+col1, col2, col3 = st.columns(3)
 
-            # Second chart - full width bar chart
-            st.markdown("### Tickets by Priority")
-            priority_data = pd.DataFrame(tickets)['priority'].value_counts()
-            fig = px.bar(
-                x=priority_data.index,
-                y=priority_data.values,
-                title="Ticket Count by Priority Level",
-                color=priority_data.index,
-                color_discrete_map={
-                    'Critical': '#dc2626',
-                    'High': '#ea580c',
-                    'Medium': '#ca8a04', 
-                    'Low': '#059669'
-                }
-            )
-            fig.update_layout(
-                height=500,
-                font=dict(size=16),
-                title_font_size=20,
-                margin=dict(t=80, b=80, l=80, r=80),
-                showlegend=False
-            )
-            fig.update_xaxes(title="Priority Level", title_font_size=16, tickfont_size=14)
-            fig.update_yaxes(title="Number of Tickets", title_font_size=16, tickfont_size=14)
-            fig.update_traces(textfont_size=14, texttemplate='%{y}', textposition='outside')
-            st.plotly_chart(fig, use_container_width=True)    
-            
+with col1:
+    st.markdown("### Status Breakdown")
+    open_count = len([t for t in tickets if t['status'] == 'Open'])
+    progress_count = len([t for t in tickets if t['status'] == 'In Progress'])
+    resolved_count = len([t for t in tickets if t['status'] == 'Resolved'])
+    closed_count = len([t for t in tickets if t['status'] == 'Closed'])
+    
+    st.metric("🔴 Open", open_count)
+    st.metric("🟡 In Progress", progress_count)
+    st.metric("🟢 Resolved", resolved_count)
+    st.metric("⚫ Closed", closed_count)
+
+with col2:
+    st.markdown("### Priority Breakdown")
+    critical_count = len([t for t in tickets if t['priority'] == 'Critical'])
+    high_count = len([t for t in tickets if t['priority'] == 'High'])
+    medium_count = len([t for t in tickets if t['priority'] == 'Medium'])
+    low_count = len([t for t in tickets if t['priority'] == 'Low'])
+    
+    st.metric("🔥 Critical", critical_count)
+    st.metric("🟠 High", high_count)
+    st.metric("🟡 Medium", medium_count)
+    st.metric("🟢 Low", low_count)
+
+with col3:
+    st.markdown("### Performance")
+    resolution_rate = resolved_count / total_tickets * 100 if total_tickets > 0 else 0
+    overdue_count = len([t for t in tickets if t['is_overdue']])
+    
+    st.metric("Resolution Rate", f"{resolution_rate:.1f}%")
+    st.metric("⚠️ Overdue", overdue_count)
+    st.metric("📊 Total Active", open_count + progress_count)            
     st.subheader("🕐 Recent Tickets")
     if tickets:
         recent_tickets = sorted(tickets, key=lambda x: x['created_date'], reverse=True)[:5]
