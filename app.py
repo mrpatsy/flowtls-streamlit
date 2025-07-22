@@ -2595,28 +2595,26 @@ def show_sidebar():
             
             st.markdown("---")
             
-# Add auto-refresh controls
+            # Add auto-refresh controls
             refresh_enabled = st.session_state.get(REFRESH_ENABLED_KEY, True)
             
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                if refresh_enabled:
-                    st.markdown("🟢 **Auto-refresh**")
-                else:
-                    st.markdown("🔴 **Auto-refresh**")
-            with col2:
-                toggle_icon = "🔛" if refresh_enabled else "⏹️"
-                if st.button(toggle_icon, help="Toggle auto-refresh", key="refresh_toggle"):
+            if refresh_enabled:
+                st.markdown("🟢 **Auto-refresh: ON**")
+                if st.button("Turn OFF", help="Disable auto-refresh", key="refresh_toggle", type="secondary"):
+                    toggle_auto_refresh()
+                    st.rerun()
+            else:
+                st.markdown("🔴 **Auto-refresh: OFF**")
+                if st.button("Turn ON", help="Enable auto-refresh", key="refresh_toggle", type="primary"):
                     toggle_auto_refresh()
                     st.rerun()
             
-            # Show last refresh time in a cleaner format
+            # Show last refresh time
             if LAST_REFRESH_KEY in st.session_state:
                 last_refresh = datetime.fromtimestamp(st.session_state[LAST_REFRESH_KEY])
-                st.caption(f"⏰ Last updated: {last_refresh.strftime('%H:%M:%S')}")
+                st.caption(f"Last updated: {last_refresh.strftime('%H:%M:%S')}")
             
-            st.markdown("---")
-            
+            st.markdown("---")            
             if st.button("📊 Dashboard", use_container_width=True):
                 st.session_state.page = 'dashboard'
                 st.rerun()
