@@ -311,59 +311,45 @@ st.markdown("""
     .metric-button-hidden {
         display: none !important;
     }
-    /* Large dashboard metric cards */
-    .metric-dashboard-card {
+    /* Override ALL button styling in the Dashboard Overview section */
+    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 2px solid rgba(156, 163, 175, 0.7) !important;
-        border-radius: 1rem !important;
-        padding: 2rem 1.5rem !important;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+        border: 3px solid rgba(156, 163, 175, 0.8) !important;
+        border-radius: 1.25rem !important;
+        padding: 3rem 2rem !important;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
         color: #f3f4f6 !important;
-        font-weight: 700 !important;
-        font-size: 1.4rem !important;
-        line-height: 1.6 !important;
+        font-weight: 800 !important;
+        font-size: 1.5rem !important;
+        line-height: 2 !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
-        min-height: 140px !important;
+        min-height: 200px !important;
         text-align: center !important;
         cursor: pointer !important;
         white-space: pre-line !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
 
-    .metric-dashboard-card:hover {
+    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
-        border-color: rgba(156, 163, 175, 0.9) !important;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-4px) scale(1.03) !important;
+        border-color: rgba(156, 163, 175, 1) !important;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5) !important;
+        transform: translateY(-6px) scale(1.08) !important;
         color: #ffffff !important;
-    }
-    /* Dashboard Overview section buttons only */
-    div[data-testid="column"]:has(.stButton) .stButton > button {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 2px solid rgba(156, 163, 175, 0.7) !important;
-        border-radius: 1rem !important;
-        padding: 2.5rem 1.5rem !important;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25) !important;
-        color: #f3f4f6 !important;
-        font-weight: 700 !important;
-        font-size: 1.3rem !important;
-        line-height: 1.8 !important;
-        transition: all 0.3s ease !important;
-        width: 100% !important;
-        min-height: 160px !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        white-space: pre-line !important;
     }
 
-    div[data-testid="column"]:has(.stButton) .stButton > button:hover {
-        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
-        border-color: rgba(156, 163, 175, 0.9) !important;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-4px) scale(1.05) !important;
-        color: #ffffff !important;
+    /* Target specifically the metric numbers to be larger */
+    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button span {
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+        display: block !important;
+        margin-top: 1rem !important;
     }
-</style>
+    </style>
 """, unsafe_allow_html=True)
 
 db_lock = threading.Lock()
