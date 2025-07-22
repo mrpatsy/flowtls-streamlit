@@ -103,25 +103,6 @@ st.markdown("""
         font-size: 0.75rem;
         font-weight: bold;
     }
-    .metric-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f2937;
-        margin: 0.5rem 0;
-    }
-    .metric-label {
-        color: #6b7280;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
     .user-role-admin {
         background: linear-gradient(135deg, #7c2d12, #ea580c);
         color: white;
@@ -207,149 +188,61 @@ st.markdown("""
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
-    .stButton > button {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        color: #1f2937;
-        font-weight: bold;
-        font-size: 1.1rem;
-        transition: all 0.2s ease;
-    }
-    .stButton > button:hover {
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
-        border-color: #3b82f6;
-        transform: translateY(-2px);
-    }
-    /* Default button style - for action buttons and pagination */
-    .stButton > button {
-        background: rgba(55, 65, 81, 0.8) !important;
-        border: 1px solid rgba(75, 85, 99, 0.5) !important;
-        border-radius: 0.375rem !important;
-        padding: 0.5rem 1rem !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-        color: #e5e7eb !important;
-        font-weight: 500 !important;
-        font-size: 0.9rem !important;
-        min-width: auto !important;
-        width: auto !important;
-        transition: all 0.2s ease !important;
-        margin: 0.125rem !important;
-    }
 
-    .stButton > button:hover {
-        background: rgba(75, 85, 99, 0.9) !important;
-        border-color: rgba(156, 163, 175, 0.7) !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-1px) !important;
-        color: #f3f4f6 !important;
-    }
-
-    .stButton > button:disabled {
-        background: rgba(31, 41, 55, 0.3) !important;
-        border-color: rgba(55, 65, 81, 0.3) !important;
-        color: rgba(156, 163, 175, 0.5) !important;
-        box-shadow: none !important;
-        cursor: not-allowed !important;
-        transform: none !important;
-    }
-
-    /* Larger style for dashboard metric buttons and main action buttons */
-    .stButton > button[data-testid="baseButton-secondary"] {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 1px solid rgba(75, 85, 99, 0.7) !important;
-        border-radius: 0.75rem !important;
-        padding: 1.5rem 2rem !important;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
-        color: #f3f4f6 !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        transition: all 0.2s ease !important;
-        width: 100% !important;
-    }
-
-    .stButton > button[data-testid="baseButton-secondary"]:hover {
-        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
-        border-color: rgba(156, 163, 175, 0.8) !important;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-2px) !important;
-        color: #ffffff !important;
-    }
-    /* Large dashboard metric buttons ONLY - using specific container targeting */
-    div[data-testid="column"] .metric-button {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 2px solid rgba(75, 85, 99, 0.7) !important;
-        border-radius: 1rem !important;
-        padding: 2rem 1.5rem !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25) !important;
-        color: #f3f4f6 !important;
-        font-weight: 700 !important;
-        font-size: 1.2rem !important;
-        line-height: 1.4 !important;
-        transition: all 0.3s ease !important;
-        width: 100% !important;
-        min-height: 120px !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
-    }
-
-    div[data-testid="column"] .metric-button:hover {
-        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
-        border-color: rgba(156, 163, 175, 0.9) !important;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
-        transform: translateY(-3px) scale(1.02) !important;
-        color: #ffffff !important;
-    }
-
-    /* Hide the actual streamlit buttons for metric cards */
-    .metric-button-hidden {
-        display: none !important;
-    }
-    /* Override ALL button styling in the Dashboard Overview section */
-    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button {
+    /* FORCE LARGE DASHBOARD BUTTONS - NUCLEAR OPTION */
+    button[kind="secondary"] {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
         border: 3px solid rgba(156, 163, 175, 0.8) !important;
-        border-radius: 1.25rem !important;
-        padding: 3rem 2rem !important;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+        border-radius: 1.5rem !important;
+        padding: 4rem 2rem !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
         color: #f3f4f6 !important;
-        font-weight: 800 !important;
-        font-size: 1.5rem !important;
-        line-height: 2 !important;
+        font-weight: 900 !important;
+        font-size: 1.8rem !important;
+        line-height: 2.2 !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
-        min-height: 200px !important;
+        min-height: 250px !important;
         text-align: center !important;
         cursor: pointer !important;
         white-space: pre-line !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        align-items: center !important;
     }
 
-    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button:hover {
+    button[kind="secondary"]:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
         border-color: rgba(156, 163, 175, 1) !important;
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5) !important;
-        transform: translateY(-6px) scale(1.08) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+        transform: translateY(-8px) scale(1.1) !important;
         color: #ffffff !important;
     }
 
-    /* Target specifically the metric numbers to be larger */
-    section[data-testid="stVerticalBlock"] div[data-testid="column"] .stButton > button span {
-        font-size: 2.5rem !important;
+    /* Fallback - target ALL buttons in columns */
+    .stButton > button {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 3px solid rgba(156, 163, 175, 0.8) !important;
+        border-radius: 1.5rem !important;
+        padding: 4rem 2rem !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
+        color: #f3f4f6 !important;
         font-weight: 900 !important;
-        display: block !important;
-        margin-top: 1rem !important;
+        font-size: 1.8rem !important;
+        line-height: 2.2 !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        min-height: 250px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        white-space: pre-line !important;
     }
-    </style>
+
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+        border-color: rgba(156, 163, 175, 1) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+        transform: translateY(-8px) scale(1.1) !important;
+        color: #ffffff !important;
+    }
+</style>
 """, unsafe_allow_html=True)
 
 db_lock = threading.Lock()
