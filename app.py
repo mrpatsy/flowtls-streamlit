@@ -1509,39 +1509,60 @@ def show_dashboard():
         
         with col1:
             st.subheader("📊 Tickets by Status")
+            st.subheader("📊 Dashboard Analytics")
+
+            # First chart - full width pie chart
+            st.markdown("### Tickets by Status")
             status_data = pd.DataFrame(tickets)['status'].value_counts()
             fig = px.pie(
                 values=status_data.values,
                 names=status_data.index,
+                title="Ticket Distribution by Status",
                 color_discrete_map={
                     'Open': '#dc2626',
-                    'In Progress': '#ca8a04',
+                    'In Progress': '#ca8a04', 
                     'Resolved': '#059669',
                     'Closed': '#6b7280'
                 }
             )
-            fig.update_layout(height=450, margin=dict(t=50, b=50, l=50, r=50))
+            fig.update_layout(
+                height=500,
+                font=dict(size=16),
+                title_font_size=20,
+                margin=dict(t=80, b=80, l=80, r=80),
+                showlegend=True,
+                legend=dict(font=dict(size=14))
+            )
+            fig.update_traces(textfont_size=14, textinfo='label+percent')
             st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.subheader("📈 Tickets by Priority")
+
+            # Second chart - full width bar chart
+            st.markdown("### Tickets by Priority")
             priority_data = pd.DataFrame(tickets)['priority'].value_counts()
             fig = px.bar(
                 x=priority_data.index,
                 y=priority_data.values,
+                title="Ticket Count by Priority Level",
                 color=priority_data.index,
                 color_discrete_map={
                     'Critical': '#dc2626',
                     'High': '#ea580c',
-                    'Medium': '#ca8a04',
+                    'Medium': '#ca8a04', 
                     'Low': '#059669'
                 }
             )
-            fig.update_layout(height=450, showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
-            fig.update_xaxes(title="Priority")
-            fig.update_yaxes(title="Number of Tickets")
-            st.plotly_chart(fig, use_container_width=True)
-    
+            fig.update_layout(
+                height=500,
+                font=dict(size=16),
+                title_font_size=20,
+                margin=dict(t=80, b=80, l=80, r=80),
+                showlegend=False
+            )
+            fig.update_xaxes(title="Priority Level", title_font_size=16, tickfont_size=14)
+            fig.update_yaxes(title="Number of Tickets", title_font_size=16, tickfont_size=14)
+            fig.update_traces(textfont_size=14, texttemplate='%{y}', textposition='outside')
+            st.plotly_chart(fig, use_container_width=True)    
+            
     st.subheader("🕐 Recent Tickets")
     if tickets:
         recent_tickets = sorted(tickets, key=lambda x: x['created_date'], reverse=True)[:5]
