@@ -2631,7 +2631,6 @@ def show_sidebar():
                         st.session_state.page = 'tickets'
                         st.session_state.selected_ticket_id = None
                         st.rerun()
-            st.markdown("---")
             
             # Auto-refresh controls at bottom
             st.markdown("---")
