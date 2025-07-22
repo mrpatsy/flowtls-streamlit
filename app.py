@@ -1489,6 +1489,11 @@ def show_dashboard():
             st.session_state.ticket_filter = 'Overdue'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+    
+    # Charts section
+    if tickets:
+        st.subheader("📊 Visual Analytics")
+        col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("### 📈 Status Distribution")
@@ -1520,6 +1525,39 @@ def show_dashboard():
             else:
                 st.info("No tickets to display")
         
+        with col2:
+            st.markdown("### 🔥 Priority Breakdown")
+            # Create priority data
+            priority_data = {
+                'Critical': len([t for t in tickets if t['priority'] == 'Critical']),
+                'High': len([t for t in tickets if t['priority'] == 'High']),
+                'Medium': len([t for t in tickets if t['priority'] == 'Medium']),
+                'Low': len([t for t in tickets if t['priority'] == 'Low'])
+            }
+            
+            # Filter out zero values
+            priority_data = {k: v for k, v in priority_data.items() if v > 0}
+            
+            if priority_data:
+                fig = px.bar(
+                    x=list(priority_data.keys()),
+                    y=list(priority_data.values()),
+                    title="Tickets by Priority",
+                    color=list(priority_data.keys()),
+                    color_discrete_map={
+                        'Critical': '#dc2626',
+                        'High': '#ea580c',
+                        'Medium': '#ca8a04', 
+                        'Low': '#059669'
+                    }
+                )
+                fig.update_layout(height=350, margin=dict(t=50, b=50, l=50, r=50))
+                fig.update_xaxis(title="Priority Level")
+                fig.update_yaxis(title="Number of Tickets")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No tickets to display")      
+                
         with col2:
             st.markdown("### 🔥 Priority Breakdown")
             # Create priority data
