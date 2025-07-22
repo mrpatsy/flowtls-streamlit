@@ -337,6 +337,32 @@ st.markdown("""
         transform: translateY(-4px) scale(1.03) !important;
         color: #ffffff !important;
     }
+        /* Large dashboard metric buttons */
+    div[data-testid="column"] .stButton > button {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 2px solid rgba(156, 163, 175, 0.7) !important;
+        border-radius: 1rem !important;
+        padding: 2.5rem 1.5rem !important;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25) !important;
+        color: #f3f4f6 !important;
+        font-weight: 700 !important;
+        font-size: 1.3rem !important;
+        line-height: 1.8 !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        min-height: 160px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        white-space: pre-line !important;
+    }
+
+    div[data-testid="column"] .stButton > button:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+        border-color: rgba(156, 163, 175, 0.9) !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-4px) scale(1.05) !important;
+        color: #ffffff !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
