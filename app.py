@@ -1520,7 +1520,7 @@ def show_dashboard():
                     'Closed': '#6b7280'
                 }
             )
-            fig.update_layout(height=350)
+            fig.update_layout(height=450, margin=dict(t=50, b=50, l=50, r=50))
             st.plotly_chart(fig, use_container_width=True)
         
         with col2:
@@ -1537,7 +1537,7 @@ def show_dashboard():
                     'Low': '#059669'
                 }
             )
-            fig.update_layout(height=350, showlegend=False)
+            fig.update_layout(height=450, showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
             fig.update_xaxes(title="Priority")
             fig.update_yaxes(title="Number of Tickets")
             st.plotly_chart(fig, use_container_width=True)
@@ -2557,7 +2557,7 @@ def show_analytics_page():
         y='count',
         title="Daily Ticket Creation"
     )
-    fig.update_layout(height=400)
+    fig.update_layout(height=450, margin=dict(t=50, b=50, l=50, r=50))
     st.plotly_chart(fig, use_container_width=True)
     
     # Company analysis
