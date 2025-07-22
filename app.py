@@ -2595,50 +2595,6 @@ def show_sidebar():
             
             st.markdown("---")
             
-            # Add auto-refresh controls
-            refresh_enabled = st.session_state.get(REFRESH_ENABLED_KEY, True)
-            
-            if refresh_enabled:
-                st.markdown("🟢 **Auto-refresh: ON**")
-                if st.button("Turn OFF", help="Disable auto-refresh", key="refresh_toggle", type="secondary"):
-                    toggle_auto_refresh()
-                    st.rerun()
-            else:
-                st.markdown("🔴 **Auto-refresh: OFF**")
-                if st.button("Turn ON", help="Enable auto-refresh", key="refresh_toggle", type="primary"):
-                    toggle_auto_refresh()
-                    st.rerun()
-            
-            # Show last refresh time
-            if LAST_REFRESH_KEY in st.session_state:
-                last_refresh = datetime.fromtimestamp(st.session_state[LAST_REFRESH_KEY])
-                st.caption(f"Last updated: {last_refresh.strftime('%H:%M:%S')}")
-            
-            st.markdown("---")            
-            if st.button("📊 Dashboard", use_container_width=True):
-                st.session_state.page = 'dashboard'
-                st.rerun()
-            
-            if st.button("🎫 Tickets", use_container_width=True):
-                st.session_state.page = 'tickets'
-                st.rerun()
-            
-            if st.button("➕ Create Ticket", use_container_width=True):
-                st.session_state.page = 'create_ticket'
-                st.rerun()
-            
-            if user['permissions'].get('can_view_all_tickets', False):
-                if st.button("📈 Analytics", use_container_width=True):
-                    st.session_state.page = 'analytics'
-                    st.rerun()
-            
-            if user['permissions'].get('can_create_users', False):
-                if st.button("👥 Users", use_container_width=True):
-                    st.session_state.page = 'users'
-                    st.rerun()
-            
-            st.markdown("---")
-            
             # Show currently viewing ticket if applicable
             if st.session_state.selected_ticket_id and st.session_state.page == 'ticket_detail':
                 st.markdown("**Currently Viewing:**")
