@@ -1397,155 +1397,45 @@ def show_dashboard():
         else:
             st.empty()
     
-    st.subheader("📈 Dashboard Overview")
+    st.subheader("📊 Ticket Overview")
     
-    total_tickets = len(tickets)
-    open_tickets = len([t for t in tickets if t['status'] == 'Open'])
-    in_progress_tickets = len([t for t in tickets if t['status'] == 'In Progress'])
-    resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
-    overdue_tickets = len([t for t in tickets if t['is_overdue']])
+    # Create a simple visual summary instead of complex charts
+    col1, col2, col3 = st.columns(3)
     
-# Add custom CSS just for metric buttons
-    st.markdown("""
-    <style>
-    /* Target buttons by their specific key attributes */
-    button[key="metric_total"],
-    button[key="metric_open"], 
-    button[key="metric_progress"],
-    button[key="metric_resolved"],
-    button[key="metric_overdue"] {
-        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%) !important;
-        border: 2px solid #e5e7eb !important;
-        border-radius: 1.5rem !important;
-        padding: 3rem 2rem !important;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08) !important;
-        color: #1f2937 !important;
-        font-weight: 800 !important;
-        font-size: 2.5rem !important;
-        line-height: 1.2 !important;
-        min-height: 200px !important;
-        white-space: pre-line !important;
-        text-align: center !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Dashboard metrics with custom styling
-    st.markdown(f"""
-    <div style="display: flex; gap: 1rem; margin: 2rem 0;">
-        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'All'}}, '*')">
-            <div class="metric-number">{total_tickets}</div>
-            <div class="metric-label">Total Tickets</div>
-        </div>
-        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Open'}}, '*')">
-            <div class="metric-number" style="color: #dc2626;">{open_tickets}</div>
-            <div class="metric-label">Open Tickets</div>
-        </div>
-        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'In Progress'}}, '*')">
-            <div class="metric-number" style="color: #ca8a04;">{in_progress_tickets}</div>
-            <div class="metric-label">In Progress</div>
-        </div>
-        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Resolved'}}, '*')">
-            <div class="metric-number" style="color: #059669;">{resolved_tickets}</div>
-            <div class="metric-label">Resolved</div>
-        </div>
-        <div class="metric-card" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'Overdue'}}, '*')">
-            <div class="metric-number" style="color: #dc2626;">{overdue_tickets}</div>
-            <div class="metric-label">Overdue</div>
-        </div>
-    </div>
-
-    <style>
-    .metric-card {{
-        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
-        border: 2px solid #e5e7eb;
-        border-radius: 1.5rem;
-        padding: 3rem 2rem;
-        text-align: center;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        flex: 1;
-        min-height: 200px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }}
-
-    .metric-card:hover {{
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.15);
-        border-color: #3b82f6;
-    }}
-
-    .metric-number {{
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1;
-        margin-bottom: 0.5rem;
-        color: #1f2937;
-    }}
-
-    .metric-label {{
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #6b7280;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-# Add invisible buttons for navigation
-    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        if st.button("", key="metric_total_hidden", help="Total"):
-            st.session_state.ticket_filter = "All"
-            st.session_state.page = 'filtered_tickets'
-            st.rerun()
-            
-    # Add the rest of the hidden buttons for other columns...
+        st.markdown("### Status Breakdown")
+        open_count = len([t for t in tickets if t['status'] == 'Open'])
+        progress_count = len([t for t in tickets if t['status'] == 'In Progress'])
+        resolved_count = len([t for t in tickets if t['status'] == 'Resolved'])
+        closed_count = len([t for t in tickets if t['status'] == 'Closed'])
         
-        if tickets:
-            col1, col2 = st.columns(2)
+        st.metric("🔴 Open", open_count)
+        st.metric("🟡 In Progress", progress_count)
+        st.metric("🟢 Resolved", resolved_count)
+        st.metric("⚫ Closed", closed_count)
+
+    with col2:
+        st.markdown("### Priority Breakdown")
+        critical_count = len([t for t in tickets if t['priority'] == 'Critical'])
+        high_count = len([t for t in tickets if t['priority'] == 'High'])
+        medium_count = len([t for t in tickets if t['priority'] == 'Medium'])
+        low_count = len([t for t in tickets if t['priority'] == 'Low'])
         
-        with col1:
-            st.subheader("📊 Tickets by Status")
-st.subheader("📊 Ticket Overview")
+        st.metric("🔥 Critical", critical_count)
+        st.metric("🟠 High", high_count)
+        st.metric("🟡 Medium", medium_count)
+        st.metric("🟢 Low", low_count)
 
-# Create a simple visual summary instead of complex charts
-col1, col2, col3 = st.columns(3)
+    with col3:
+        st.markdown("### Performance")
+        resolution_rate = resolved_count / total_tickets * 100 if total_tickets > 0 else 0
+        overdue_count = len([t for t in tickets if t['is_overdue']])
+        
+        st.metric("Resolution Rate", f"{resolution_rate:.1f}%")
+        st.metric("⚠️ Overdue", overdue_count)
+        st.metric("📊 Total Active", open_count + progress_count)
 
-with col1:
-    st.markdown("### Status Breakdown")
-    open_count = len([t for t in tickets if t['status'] == 'Open'])
-    progress_count = len([t for t in tickets if t['status'] == 'In Progress'])
-    resolved_count = len([t for t in tickets if t['status'] == 'Resolved'])
-    closed_count = len([t for t in tickets if t['status'] == 'Closed'])
-    
-    st.metric("🔴 Open", open_count)
-    st.metric("🟡 In Progress", progress_count)
-    st.metric("🟢 Resolved", resolved_count)
-    st.metric("⚫ Closed", closed_count)
-
-with col2:
-    st.markdown("### Priority Breakdown")
-    critical_count = len([t for t in tickets if t['priority'] == 'Critical'])
-    high_count = len([t for t in tickets if t['priority'] == 'High'])
-    medium_count = len([t for t in tickets if t['priority'] == 'Medium'])
-    low_count = len([t for t in tickets if t['priority'] == 'Low'])
-    
-    st.metric("🔥 Critical", critical_count)
-    st.metric("🟠 High", high_count)
-    st.metric("🟡 Medium", medium_count)
-    st.metric("🟢 Low", low_count)
-
-with col3:
-    st.markdown("### Performance")
-    resolution_rate = resolved_count / total_tickets * 100 if total_tickets > 0 else 0
-    overdue_count = len([t for t in tickets if t['is_overdue']])
-    
-    st.metric("Resolution Rate", f"{resolution_rate:.1f}%")
-    st.metric("⚠️ Overdue", overdue_count)
-    st.metric("📊 Total Active", open_count + progress_count)            
+    st.subheader("🕐 Recent Tickets")          
     st.subheader("🕐 Recent Tickets")
     if tickets:
         recent_tickets = sorted(tickets, key=lambda x: x['created_date'], reverse=True)[:5]
