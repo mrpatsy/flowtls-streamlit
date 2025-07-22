@@ -1428,6 +1428,7 @@ def show_dashboard():
 
     with col3:
         st.markdown("### Performance")
+        total_tickets = len(tickets)
         resolution_rate = resolved_count / total_tickets * 100 if total_tickets > 0 else 0
         overdue_count = len([t for t in tickets if t['is_overdue']])
         
