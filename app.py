@@ -1368,6 +1368,13 @@ def show_dashboard():
     
     tickets = ticket_service.get_all_tickets(user['id'], user['permissions'], user['full_name'])
     
+    # Calculate metrics
+    total_tickets = len(tickets)
+    open_tickets = len([t for t in tickets if t['status'] == 'Open'])
+    in_progress_tickets = len([t for t in tickets if t['status'] == 'In Progress'])
+    resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
+    overdue_tickets = len([t for t in tickets if t['is_overdue']])
+    
     st.subheader("🚀 Quick Actions")
     col1, col2, col3, col4 = st.columns(4)
     
@@ -1397,81 +1404,109 @@ def show_dashboard():
         else:
             st.empty()
     
-    
+    # Large clickable metric cards
     st.subheader("📈 Dashboard Overview")
-    
-    total_tickets = len(tickets)
-    open_tickets = len([t for t in tickets if t['status'] == 'Open'])
-    in_progress_tickets = len([t for t in tickets if t['status'] == 'In Progress'])
-    resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
-    overdue_tickets = len([t for t in tickets if t['is_overdue']])
-    
-    # Dashboard metrics with custom styling
-    st.markdown(f"""
-    <div style="display: flex; gap: 1rem; margin: 2rem 0;">
-        <div class="metric-card">
-            <div class="metric-number">{total_tickets}</div>
-            <div class="metric-label">Total Tickets</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-number" style="color: #dc2626;">{open_tickets}</div>
-            <div class="metric-label">Open Tickets</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-number" style="color: #ca8a04;">{in_progress_tickets}</div>
-            <div class="metric-label">In Progress</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-number" style="color: #059669;">{resolved_tickets}</div>
-            <div class="metric-label">Resolved</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-number" style="color: #dc2626;">{overdue_tickets}</div>
-            <div class="metric-label">Overdue</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.subheader("📊 Ticket Overview")
-    
-    # Create a simple visual summary instead of complex charts
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        st.markdown("### Status Breakdown")
-        open_count = len([t for t in tickets if t['status'] == 'Open'])
-        progress_count = len([t for t in tickets if t['status'] == 'In Progress'])
-        resolved_count = len([t for t in tickets if t['status'] == 'Resolved'])
-        closed_count = len([t for t in tickets if t['status'] == 'Closed'])
-        
-        st.metric("🔴 Open", open_count)
-        st.metric("🟡 In Progress", progress_count)
-        st.metric("🟢 Resolved", resolved_count)
-        st.metric("⚫ Closed", closed_count)
-
+        if st.button(f"📊 Total Tickets\n\n{total_tickets}", key="total_btn", use_container_width=True, help="View all tickets"):
+            st.session_state.ticket_filter = 'All'
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+    
     with col2:
-        st.markdown("### Priority Breakdown")
-        critical_count = len([t for t in tickets if t['priority'] == 'Critical'])
-        high_count = len([t for t in tickets if t['priority'] == 'High'])
-        medium_count = len([t for t in tickets if t['priority'] == 'Medium'])
-        low_count = len([t for t in tickets if t['priority'] == 'Low'])
-        
-        st.metric("🔥 Critical", critical_count)
-        st.metric("🟠 High", high_count)
-        st.metric("🟡 Medium", medium_count)
-        st.metric("🟢 Low", low_count)
-
+        if st.button(f"🔴 Open Tickets\n\n{open_tickets}", key="open_btn", use_container_width=True, help="View open tickets"):
+            st.session_state.ticket_filter = 'Open'
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+    
     with col3:
-        st.markdown("### Performance")
-        total_tickets = len(tickets)
-        resolution_rate = resolved_count / total_tickets * 100 if total_tickets > 0 else 0
-        overdue_count = len([t for t in tickets if t['is_overdue']])
+        if st.button(f"🟡 In Progress\n\n{in_progress_tickets}", key="progress_btn", use_container_width=True, help="View tickets in progress"):
+            st.session_state.ticket_filter = 'In Progress'
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+    
+    with col4:
+        if st.button(f"🟢 Resolved\n\n{resolved_tickets}", key="resolved_btn", use_container_width=True, help="View resolved tickets"):
+            st.session_state.ticket_filter = 'Resolved'
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+    
+    with col5:
+        if st.button(f"⚠️ Overdue\n\n{overdue_tickets}", key="overdue_btn", use_container_width=True, help="View overdue tickets"):
+            st.session_state.ticket_filter = 'Overdue'
+            st.session_state.page = 'filtered_tickets'
+            st.rerun()
+    
+    # Charts section
+    if tickets:
+        st.subheader("📊 Visual Analytics")
+        col1, col2 = st.columns(2)
         
-        st.metric("Resolution Rate", f"{resolution_rate:.1f}%")
-        st.metric("⚠️ Overdue", overdue_count)
-        st.metric("📊 Total Active", open_count + progress_count)
-
-    st.subheader("🕐 Recent Tickets")          
+        with col1:
+            st.markdown("### 📈 Status Distribution")
+            # Create status data for pie chart
+            status_data = {
+                'Open': open_tickets,
+                'In Progress': in_progress_tickets, 
+                'Resolved': resolved_tickets,
+                'Closed': len([t for t in tickets if t['status'] == 'Closed'])
+            }
+            
+            # Filter out zero values
+            status_data = {k: v for k, v in status_data.items() if v > 0}
+            
+            if status_data:
+                fig = px.pie(
+                    values=list(status_data.values()),
+                    names=list(status_data.keys()),
+                    title="Tickets by Status",
+                    color_discrete_map={
+                        'Open': '#dc2626',
+                        'In Progress': '#ca8a04', 
+                        'Resolved': '#059669',
+                        'Closed': '#6b7280'
+                    }
+                )
+                fig.update_layout(height=350, margin=dict(t=50, b=50, l=50, r=50))
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No tickets to display")
+        
+        with col2:
+            st.markdown("### 🔥 Priority Breakdown")
+            # Create priority data
+            priority_data = {
+                'Critical': len([t for t in tickets if t['priority'] == 'Critical']),
+                'High': len([t for t in tickets if t['priority'] == 'High']),
+                'Medium': len([t for t in tickets if t['priority'] == 'Medium']),
+                'Low': len([t for t in tickets if t['priority'] == 'Low'])
+            }
+            
+            # Filter out zero values
+            priority_data = {k: v for k, v in priority_data.items() if v > 0}
+            
+            if priority_data:
+                fig = px.bar(
+                    x=list(priority_data.keys()),
+                    y=list(priority_data.values()),
+                    title="Tickets by Priority",
+                    color=list(priority_data.keys()),
+                    color_discrete_map={
+                        'Critical': '#dc2626',
+                        'High': '#ea580c',
+                        'Medium': '#ca8a04', 
+                        'Low': '#059669'
+                    }
+                )
+                fig.update_layout(height=350, margin=dict(t=50, b=50, l=50, r=50))
+                fig.update_xaxis(title="Priority Level")
+                fig.update_yaxis(title="Number of Tickets")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No tickets to display")
+    
+    # Recent tickets section
     st.subheader("🕐 Recent Tickets")
     if tickets:
         recent_tickets = sorted(tickets, key=lambda x: x['created_date'], reverse=True)[:5]
@@ -1511,7 +1546,6 @@ def show_dashboard():
                 st.markdown("---")
     else:
         st.info("No tickets found. Create your first ticket using the button above!")
-
 
 def show_tickets_page():
     if not require_auth():
