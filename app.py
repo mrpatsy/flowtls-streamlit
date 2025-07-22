@@ -2655,12 +2655,31 @@ def show_sidebar():
                         st.rerun()
                 st.markdown("---")
             
+            # Auto-refresh controls at bottom
+            st.markdown("---")
+            refresh_enabled = st.session_state.get(REFRESH_ENABLED_KEY, True)
+            
+            if refresh_enabled:
+                st.markdown("🟢 **Auto-refresh: ON**")
+                if st.button("Turn OFF", help="Disable auto-refresh", key="refresh_toggle", type="secondary"):
+                    toggle_auto_refresh()
+                    st.rerun()
+            else:
+                st.markdown("🔴 **Auto-refresh: OFF**")
+                if st.button("Turn ON", help="Enable auto-refresh", key="refresh_toggle", type="primary"):
+                    toggle_auto_refresh()
+                    st.rerun()
+            
+            # Show last refresh time
+            if LAST_REFRESH_KEY in st.session_state:
+                last_refresh = datetime.fromtimestamp(st.session_state[LAST_REFRESH_KEY])
+                st.caption(f"Last updated: {last_refresh.strftime('%H:%M:%S')}")
+
             if st.button("🚪 Logout", use_container_width=True):
                 st.session_state.user = None
                 st.session_state.page = 'login'
                 st.session_state.selected_ticket_id = None
                 st.rerun()
-
 
 def main():
     try:
