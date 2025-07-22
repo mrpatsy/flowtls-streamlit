@@ -311,6 +311,32 @@ st.markdown("""
     .metric-button-hidden {
         display: none !important;
     }
+    /* Large dashboard metric cards */
+    .metric-dashboard-card {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
+        border: 2px solid rgba(156, 163, 175, 0.7) !important;
+        border-radius: 1rem !important;
+        padding: 2rem 1.5rem !important;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+        color: #f3f4f6 !important;
+        font-weight: 700 !important;
+        font-size: 1.4rem !important;
+        line-height: 1.6 !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        min-height: 140px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        white-space: pre-line !important;
+    }
+
+    .metric-dashboard-card:hover {
+        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
+        border-color: rgba(156, 163, 175, 0.9) !important;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
+        transform: translateY(-4px) scale(1.03) !important;
+        color: #ffffff !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1409,39 +1435,63 @@ def show_dashboard():
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        if st.button(f"📊 Total Tickets\n\n{total_tickets}", key="total_btn", use_container_width=True, help="View all tickets"):
+        st.markdown(f"""
+        <div class="metric-dashboard-card" onclick="document.querySelector('[data-testid=\\"total_btn\\"]').click()">
+            📊 Total Tickets<br><br><span style="font-size: 2.5rem; font-weight: 900;">{total_tickets}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key="total_btn", help="View all tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = 'All'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
-    
+
     with col2:
-        if st.button(f"🔴 Open Tickets\n\n{open_tickets}", key="open_btn", use_container_width=True, help="View open tickets"):
+        st.markdown(f"""
+        <div class="metric-dashboard-card" onclick="document.querySelector('[data-testid=\\"open_btn\\"]').click()" style="border-color: #dc2626 !important;">
+            🔴 Open Tickets<br><br><span style="font-size: 2.5rem; font-weight: 900;">{open_tickets}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key="open_btn", help="View open tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = 'Open'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
-    
+
     with col3:
-        if st.button(f"🟡 In Progress\n\n{in_progress_tickets}", key="progress_btn", use_container_width=True, help="View tickets in progress"):
+        st.markdown(f"""
+        <div class="metric-dashboard-card" onclick="document.querySelector('[data-testid=\\"progress_btn\\"]').click()" style="border-color: #ca8a04 !important;">
+            🟡 In Progress<br><br><span style="font-size: 2.5rem; font-weight: 900;">{in_progress_tickets}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key="progress_btn", help="View tickets in progress", label_visibility="hidden"):
             st.session_state.ticket_filter = 'In Progress'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
-    
+
     with col4:
-        if st.button(f"🟢 Resolved\n\n{resolved_tickets}", key="resolved_btn", use_container_width=True, help="View resolved tickets"):
+        st.markdown(f"""
+        <div class="metric-dashboard-card" onclick="document.querySelector('[data-testid=\\"resolved_btn\\"]').click()" style="border-color: #059669 !important;">
+            🟢 Resolved<br><br><span style="font-size: 2.5rem; font-weight: 900;">{resolved_tickets}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key="resolved_btn", help="View resolved tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = 'Resolved'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
-    
+
     with col5:
-        if st.button(f"⚠️ Overdue\n\n{overdue_tickets}", key="overdue_btn", use_container_width=True, help="View overdue tickets"):
+        st.markdown(f"""
+        <div class="metric-dashboard-card" onclick="document.querySelector('[data-testid=\\"overdue_btn\\"]').click()" style="border-color: #dc2626 !important; animation: pulse 2s infinite;">
+            ⚠️ Overdue<br><br><span style="font-size: 2.5rem; font-weight: 900;">{overdue_tickets}</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("", key="overdue_btn", help="View overdue tickets", label_visibility="hidden"):
             st.session_state.ticket_filter = 'Overdue'
             st.session_state.page = 'filtered_tickets'
-            st.rerun()
-    
-    # Charts section
-    if tickets:
-        st.subheader("📊 Visual Analytics")
-        col1, col2 = st.columns(2)
+            st.rerun()    
+        # Charts section
+        if tickets:
+            st.subheader("📊 Visual Analytics")
+            col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("### 📈 Status Distribution")
