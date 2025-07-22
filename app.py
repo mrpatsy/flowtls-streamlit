@@ -2595,8 +2595,6 @@ def show_sidebar():
             
             st.markdown("---")
             
-            st.markdown("---")
-            
             if st.button("📊 Dashboard", use_container_width=True):
                 st.session_state.page = 'dashboard'
                 st.rerun()
@@ -2633,7 +2631,7 @@ def show_sidebar():
                         st.session_state.page = 'tickets'
                         st.session_state.selected_ticket_id = None
                         st.rerun()
-                st.markdown("---")
+            st.markdown("---")
             
             # Auto-refresh controls at bottom
             st.markdown("---")
