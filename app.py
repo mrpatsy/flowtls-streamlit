@@ -1397,6 +1397,41 @@ def show_dashboard():
         else:
             st.empty()
     
+    
+    st.subheader("📈 Dashboard Overview")
+    
+    total_tickets = len(tickets)
+    open_tickets = len([t for t in tickets if t['status'] == 'Open'])
+    in_progress_tickets = len([t for t in tickets if t['status'] == 'In Progress'])
+    resolved_tickets = len([t for t in tickets if t['status'] == 'Resolved'])
+    overdue_tickets = len([t for t in tickets if t['is_overdue']])
+    
+    # Dashboard metrics with custom styling
+    st.markdown(f"""
+    <div style="display: flex; gap: 1rem; margin: 2rem 0;">
+        <div class="metric-card">
+            <div class="metric-number">{total_tickets}</div>
+            <div class="metric-label">Total Tickets</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-number" style="color: #dc2626;">{open_tickets}</div>
+            <div class="metric-label">Open Tickets</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-number" style="color: #ca8a04;">{in_progress_tickets}</div>
+            <div class="metric-label">In Progress</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-number" style="color: #059669;">{resolved_tickets}</div>
+            <div class="metric-label">Resolved</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-number" style="color: #dc2626;">{overdue_tickets}</div>
+            <div class="metric-label">Overdue</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.subheader("📊 Ticket Overview")
     
     # Create a simple visual summary instead of complex charts
