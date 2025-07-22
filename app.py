@@ -337,8 +337,8 @@ st.markdown("""
         transform: translateY(-4px) scale(1.03) !important;
         color: #ffffff !important;
     }
-        /* Large dashboard metric buttons */
-    div[data-testid="column"] .stButton > button {
+    /* Dashboard Overview section buttons only */
+    div[data-testid="column"]:has(.stButton) .stButton > button {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
         border: 2px solid rgba(156, 163, 175, 0.7) !important;
         border-radius: 1rem !important;
@@ -356,7 +356,7 @@ st.markdown("""
         white-space: pre-line !important;
     }
 
-    div[data-testid="column"] .stButton > button:hover {
+    div[data-testid="column"]:has(.stButton) .stButton > button:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
         border-color: rgba(156, 163, 175, 0.9) !important;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
@@ -1490,14 +1490,13 @@ def show_dashboard():
             st.session_state.page = 'filtered_tickets'
             st.rerun()
     
-    # Charts section
+    # Charts section - ONLY ONE VERSION
     if tickets:
         st.subheader("📊 Visual Analytics")
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("### 📈 Status Distribution")
-            # Create status data for pie chart
             status_data = {
                 'Open': open_tickets,
                 'In Progress': in_progress_tickets, 
@@ -1505,7 +1504,6 @@ def show_dashboard():
                 'Closed': len([t for t in tickets if t['status'] == 'Closed'])
             }
             
-            # Filter out zero values
             status_data = {k: v for k, v in status_data.items() if v > 0}
             
             if status_data:
@@ -1527,7 +1525,6 @@ def show_dashboard():
         
         with col2:
             st.markdown("### 🔥 Priority Breakdown")
-            # Create priority data
             priority_data = {
                 'Critical': len([t for t in tickets if t['priority'] == 'Critical']),
                 'High': len([t for t in tickets if t['priority'] == 'High']),
@@ -1535,7 +1532,6 @@ def show_dashboard():
                 'Low': len([t for t in tickets if t['priority'] == 'Low'])
             }
             
-            # Filter out zero values
             priority_data = {k: v for k, v in priority_data.items() if v > 0}
             
             if priority_data:
@@ -1551,42 +1547,12 @@ def show_dashboard():
                         'Low': '#059669'
                     }
                 )
-                fig.update_layout(height=350, margin=dict(t=50, b=50, l=50, r=50))
-                fig.update_xaxis(title="Priority Level")
-                fig.update_yaxis(title="Number of Tickets")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("No tickets to display")      
-                
-        with col2:
-            st.markdown("### 🔥 Priority Breakdown")
-            # Create priority data
-            priority_data = {
-                'Critical': len([t for t in tickets if t['priority'] == 'Critical']),
-                'High': len([t for t in tickets if t['priority'] == 'High']),
-                'Medium': len([t for t in tickets if t['priority'] == 'Medium']),
-                'Low': len([t for t in tickets if t['priority'] == 'Low'])
-            }
-            
-            # Filter out zero values
-            priority_data = {k: v for k, v in priority_data.items() if v > 0}
-            
-            if priority_data:
-                fig = px.bar(
-                    x=list(priority_data.keys()),
-                    y=list(priority_data.values()),
-                    title="Tickets by Priority",
-                    color=list(priority_data.keys()),
-                    color_discrete_map={
-                        'Critical': '#dc2626',
-                        'High': '#ea580c',
-                        'Medium': '#ca8a04', 
-                        'Low': '#059669'
-                    }
+                fig.update_layout(
+                    height=350, 
+                    margin=dict(t=50, b=50, l=50, r=50),
+                    xaxis_title="Priority Level",
+                    yaxis_title="Number of Tickets"
                 )
-                fig.update_layout(height=350, margin=dict(t=50, b=50, l=50, r=50))
-                fig.update_xaxis(title="Priority Level")
-                fig.update_yaxis(title="Number of Tickets")
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.info("No tickets to display")
@@ -1631,7 +1597,7 @@ def show_dashboard():
                 st.markdown("---")
     else:
         st.info("No tickets found. Create your first ticket using the button above!")
-
+        
 def show_tickets_page():
     if not require_auth():
         return
