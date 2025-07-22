@@ -13,6 +13,9 @@ import time
 import os
 # if os.path.exists("flowtls_professional.db"):
     # os.remove("flowtls_professional.db")
+import asyncio
+from datetime import datetime, timedelta
+import time
     
 st.set_page_config(
     page_title="FlowTLS SYNC+ Professional",
@@ -20,6 +23,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Auto-refresh configuration
+AUTO_REFRESH_INTERVAL = 30  # seconds
+LAST_REFRESH_KEY = 'last_refresh_time'
+REFRESH_ENABLED_KEY = 'refresh_enabled'
 
 st.markdown("""
 <style>
@@ -1300,6 +1308,24 @@ def format_date(date_str: str) -> str:
     except:
         return str(date_str)
 
+def setup_auto_refresh():
+    """Setup auto-refresh mechanism for real-time updates"""
+    if REFRESH_ENABLED_KEY not in st.session_state:
+        st.session_state[REFRESH_ENABLED_KEY] = True
+    
+    if LAST_REFRESH_KEY not in st.session_state:
+        st.session_state[LAST_REFRESH_KEY] = time.time()
+    
+    # Check if it's time to refresh
+    current_time = time.time()
+    if (current_time - st.session_state[LAST_REFRESH_KEY]) > AUTO_REFRESH_INTERVAL:
+        if st.session_state[REFRESH_ENABLED_KEY]:
+            st.session_state[LAST_REFRESH_KEY] = current_time
+            st.rerun()
+
+def toggle_auto_refresh():
+    """Toggle auto-refresh on/off"""
+    st.session_state[REFRESH_ENABLED_KEY] = not st.session_state.get(REFRESH_ENABLED_KEY, True)
 
 def show_login_page():
     st.markdown('<div class="main-header"><h1>🎫 FlowTLS SYNC+ Professional</h1><p>Enterprise Ticketing & Service Management Platform</p></div>', unsafe_allow_html=True)
@@ -2569,6 +2595,23 @@ def show_sidebar():
             
             st.markdown("---")
             
+            # Add auto-refresh controls
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                refresh_status = "🟢 Auto-refresh ON" if st.session_state.get(REFRESH_ENABLED_KEY, True) else "🔴 Auto-refresh OFF"
+                st.markdown(f"**{refresh_status}**")
+            with col2:
+                if st.button("⚙️", help="Toggle auto-refresh"):
+                    toggle_auto_refresh()
+                    st.rerun()
+            
+            # Show last refresh time
+            if LAST_REFRESH_KEY in st.session_state:
+                last_refresh = datetime.fromtimestamp(st.session_state[LAST_REFRESH_KEY])
+                st.caption(f"Last updated: {last_refresh.strftime('%H:%M:%S')}")
+            
+            st.markdown("---")
+            
             if st.button("📊 Dashboard", use_container_width=True):
                 st.session_state.page = 'dashboard'
                 st.rerun()
@@ -2619,8 +2662,9 @@ def show_sidebar():
 def main():
     try:
         if st.session_state.user:
+            setup_auto_refresh()
+        if st.session_state.user:
             show_sidebar()
-        
         if st.session_state.page == 'login':
             show_login_page()
         elif st.session_state.page == 'dashboard':
