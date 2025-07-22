@@ -2595,6 +2595,30 @@ def show_sidebar():
             
             st.markdown("---")
             
+            st.markdown("---")
+            
+            if st.button("📊 Dashboard", use_container_width=True):
+                st.session_state.page = 'dashboard'
+                st.rerun()
+            
+            if st.button("🎫 Tickets", use_container_width=True):
+                st.session_state.page = 'tickets'
+                st.rerun()
+            
+            if st.button("➕ Create Ticket", use_container_width=True):
+                st.session_state.page = 'create_ticket'
+                st.rerun()
+            
+            if user['permissions'].get('can_view_all_tickets', False):
+                if st.button("📈 Analytics", use_container_width=True):
+                    st.session_state.page = 'analytics'
+                    st.rerun()
+            
+            if user['permissions'].get('can_create_users', False):
+                if st.button("👥 Users", use_container_width=True):
+                    st.session_state.page = 'users'
+                    st.rerun()
+            
             # Show currently viewing ticket if applicable
             if st.session_state.selected_ticket_id and st.session_state.page == 'ticket_detail':
                 st.markdown("**Currently Viewing:**")
