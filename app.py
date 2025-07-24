@@ -1443,6 +1443,7 @@ def show_login_page():
 
 
 def show_dashboard():
+    global ticket_service, email_service
     if not require_auth():
         return
     
