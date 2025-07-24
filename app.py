@@ -188,29 +188,32 @@ st.markdown("""
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
-    /* Dashboard metric tiles only - large and prominent */
+/* Dashboard metric tiles only - large and prominent */
     .metric-tile button {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
         border: 3px solid rgba(156, 163, 175, 0.8) !important;
         border-radius: 1.5rem !important;
-        padding: 3rem 1.5rem !important;
+        padding: 4rem 2rem !important;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
         color: #f3f4f6 !important;
         font-weight: 900 !important;
-        font-size: 2.2rem !important;
-        line-height: 1.4 !important;
+        font-size: 2.8rem !important;
+        line-height: 1.2 !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
-        min-height: 200px !important;
+        min-height: 350px !important;
         text-align: center !important;
         white-space: pre-line !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .metric-tile button:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
         border-color: rgba(156, 163, 175, 1) !important;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-        transform: translateY(-4px) scale(1.02) !important;
+        transform: translateY(-6px) scale(1.03) !important;
     }
 </style>
 """, unsafe_allow_html=True)
