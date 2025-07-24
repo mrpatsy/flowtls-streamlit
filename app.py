@@ -1442,8 +1442,7 @@ def show_login_page():
             st.markdown("**Administrator:** `admin` / `admin123` - Full system access  \n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports  \n**Agent:** `achen` / `password123` - Can work on assigned tickets  \n**User:** `sjohnson` / `password123` - Can create and view own tickets")
 
 
-def show_dashboard():
-    global ticket_service, email_service
+def show_dashboard(ticket_service=None, email_service=None):
     if not require_auth():
         return
     
@@ -2769,7 +2768,7 @@ def main():
         if st.session_state.page == 'login':
             show_login_page()
         elif st.session_state.page == 'dashboard':
-            show_dashboard()
+            show_dashboard(ticket_service, email_service)
         elif st.session_state.page == 'tickets':
             show_tickets_page()
         elif st.session_state.page == 'filtered_tickets':
