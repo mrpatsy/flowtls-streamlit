@@ -1344,11 +1344,18 @@ def init_services():
         user_service = UserService(db_manager)
         user_management_service = UserManagementService(db_manager)
         concurrency_manager = ConcurrencyManager(db_manager)
-        email_service = EmailService(db_manager)  # Add this line
-        return db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service  # Add email_service here
+        email_service = EmailService(db_manager)
+        return db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
+
+# Initialize global services
+try:
+    db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()
+except Exception as e:
+    st.error("Application initialization failed. Please refresh the page.")
+    st.stop()
 
     try:
         db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()
@@ -1442,8 +1449,6 @@ def show_login_page():
 
 
 def show_dashboard():
-    # Access global services
-    global db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service
     if not require_auth():
         return
     
