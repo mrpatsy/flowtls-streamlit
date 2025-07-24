@@ -1354,7 +1354,6 @@ def init_services():
         db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()
     except Exception as e:
         st.error("Application initialization failed. Please refresh the page.")
-        st.error("Application initialization failed. Please refresh the page.")
         st.stop()
 
 if 'user' not in st.session_state:
