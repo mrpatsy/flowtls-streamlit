@@ -188,8 +188,8 @@ st.markdown("""
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
-/* Dashboard metric tiles only - large and prominent */
-    .metric-tile button {
+    /* Dashboard metric tiles only - large and prominent */
+    div.metric-tile > div > button {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
         border: 3px solid rgba(156, 163, 175, 0.8) !important;
         border-radius: 1.5rem !important;
@@ -197,11 +197,11 @@ st.markdown("""
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
         color: #f3f4f6 !important;
         font-weight: 900 !important;
-        font-size: 2.8rem !important;
-        line-height: 1.2 !important;
+        font-size: 3.2rem !important;
+        line-height: 1.1 !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
-        min-height: 350px !important;
+        min-height: 400px !important;
         text-align: center !important;
         white-space: pre-line !important;
         display: flex !important;
@@ -209,11 +209,11 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    .metric-tile button:hover {
+    div.metric-tile > div > button:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
         border-color: rgba(156, 163, 175, 1) !important;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-        transform: translateY(-6px) scale(1.03) !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6) !important;
+        transform: translateY(-8px) scale(1.05) !important;
     }
 </style>
 """, unsafe_allow_html=True)
