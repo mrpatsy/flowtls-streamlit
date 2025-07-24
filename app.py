@@ -1441,7 +1441,9 @@ def show_login_page():
             st.markdown("**Administrator:** `admin` / `admin123` - Full system access  \n**Manager:** `jsmith` / `password123` - Can manage tickets and view reports  \n**Agent:** `achen` / `password123` - Can work on assigned tickets  \n**User:** `sjohnson` / `password123` - Can create and view own tickets")
 
 
-def show_dashboard(ticket_service=None, email_service=None):
+def show_dashboard():
+    # Access global services
+    global ticket_service, email_service, user_service
     if not require_auth():
         return
     
