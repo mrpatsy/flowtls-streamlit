@@ -188,59 +188,29 @@ st.markdown("""
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
-
-    /* FORCE LARGE DASHBOARD BUTTONS - NUCLEAR OPTION */
-    button[kind="secondary"] {
+    /* Dashboard metric tiles only - large and prominent */
+    .metric-tile button {
         background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
         border: 3px solid rgba(156, 163, 175, 0.8) !important;
         border-radius: 1.5rem !important;
-        padding: 4rem 2rem !important;
+        padding: 3rem 1.5rem !important;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
         color: #f3f4f6 !important;
         font-weight: 900 !important;
-        font-size: 1.8rem !important;
-        line-height: 2.2 !important;
+        font-size: 2.2rem !important;
+        line-height: 1.4 !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
-        min-height: 250px !important;
+        min-height: 200px !important;
         text-align: center !important;
-        cursor: pointer !important;
         white-space: pre-line !important;
     }
 
-    button[kind="secondary"]:hover {
+    .metric-tile button:hover {
         background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
         border-color: rgba(156, 163, 175, 1) !important;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-        transform: translateY(-8px) scale(1.1) !important;
-        color: #ffffff !important;
-    }
-
-    /* Fallback - target ALL buttons in columns */
-    .stButton > button {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%) !important;
-        border: 3px solid rgba(156, 163, 175, 0.8) !important;
-        border-radius: 1.5rem !important;
-        padding: 4rem 2rem !important;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
-        color: #f3f4f6 !important;
-        font-weight: 900 !important;
-        font-size: 1.8rem !important;
-        line-height: 2.2 !important;
-        transition: all 0.3s ease !important;
-        width: 100% !important;
-        min-height: 250px !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        white-space: pre-line !important;
-    }
-
-    .stButton > button:hover {
-        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%) !important;
-        border-color: rgba(156, 163, 175, 1) !important;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-        transform: translateY(-8px) scale(1.1) !important;
-        color: #ffffff !important;
+        transform: translateY(-4px) scale(1.02) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1338,36 +1308,46 @@ def show_dashboard():
     # Large clickable metric cards
     st.subheader("📈 Dashboard Overview")
     col1, col2, col3, col4, col5 = st.columns(5)
-    
+
     with col1:
+        st.markdown('<div class="metric-tile">', unsafe_allow_html=True)
         if st.button(f"📊 Total Tickets\n\n{total_tickets}", key="total_btn", use_container_width=True, help="View all tickets"):
             st.session_state.ticket_filter = 'All'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
+        st.markdown('<div class="metric-tile">', unsafe_allow_html=True)
         if st.button(f"🔴 Open Tickets\n\n{open_tickets}", key="open_btn", use_container_width=True, help="View open tickets"):
             st.session_state.ticket_filter = 'Open'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
+        st.markdown('<div class="metric-tile">', unsafe_allow_html=True)
         if st.button(f"🟡 In Progress\n\n{in_progress_tickets}", key="progress_btn", use_container_width=True, help="View tickets in progress"):
             st.session_state.ticket_filter = 'In Progress'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col4:
+        st.markdown('<div class="metric-tile">', unsafe_allow_html=True)
         if st.button(f"🟢 Resolved\n\n{resolved_tickets}", key="resolved_btn", use_container_width=True, help="View resolved tickets"):
             st.session_state.ticket_filter = 'Resolved'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col5:
+        st.markdown('<div class="metric-tile">', unsafe_allow_html=True)
         if st.button(f"⚠️ Overdue\n\n{overdue_tickets}", key="overdue_btn", use_container_width=True, help="View overdue tickets"):
             st.session_state.ticket_filter = 'Overdue'
             st.session_state.page = 'filtered_tickets'
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Charts section - ONLY ONE VERSION
     if tickets:
