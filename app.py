@@ -1241,10 +1241,12 @@ def init_services():
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
 
-try:
-    db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()except Exception as e:
-    st.error("Application initialization failed. Please refresh the page.")
-    st.stop()
+    try:
+        db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()
+    except Exception as e:
+        st.error("Application initialization failed. Please refresh the page.")
+        st.stop()    st.error("Application initialization failed. Please refresh the page.")
+        st.stop()
 
 if 'user' not in st.session_state:
     st.session_state.user = None
