@@ -2767,7 +2767,7 @@ def main():
         if st.session_state.page == 'login':
             show_login_page()
         elif st.session_state.page == 'dashboard':
-            show_dashboard(ticket_service, email_service)
+            show_dashboard()
         elif st.session_state.page == 'tickets':
             show_tickets_page()
         elif st.session_state.page == 'filtered_tickets':
