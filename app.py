@@ -818,6 +818,115 @@ class EmailService:
             st.error(f"Error storing email: {str(e)}")
             return 0
 
+    def create_ticket_from_email(self, email_id: int, ticket_service) -> Optional[int]:
+        """Create a ticket from a stored email message"""
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get the email message
+            cursor.execute("""
+                SELECT sender_email, sender_name, subject, body_text, 
+                       priority_detected, category_detected, received_date
+                FROM email_messages WHERE id = ? AND processed = 0
+            """, (email_id,))
+            
+            email_data = cursor.fetchone()
+            if not email_data:
+                return None
+                
+            sender_email, sender_name, subject, body_text, priority, category, received_date = email_data
+            
+            # Create ticket data
+            ticket_data = {
+                'title': subject,
+                'description': f"Email from: {sender_name} ({sender_email})\n\n{body_text}",
+                'priority': priority,
+                'status': 'Open',
+                'category': category,
+                'subcategory': 'Email',
+                'assigned_to': '',  # Will be auto-assigned later
+                'tags': 'email,auto-generated',
+                'company_id': self._get_company_from_email(sender_email)
+            }
+            
+            # Create the ticket
+            if ticket_service.create_ticket(ticket_data, f"Email System ({sender_email})"):
+                # Mark email as processed
+                cursor.execute("""
+                    UPDATE email_messages SET processed = 1, ticket_id = ? WHERE id = ?
+                """, (cursor.lastrowid, email_id))
+                
+                conn.commit()
+                conn.close()
+                return cursor.lastrowid
+            
+            conn.close()
+            return None
+            
+        except Exception as e:
+            st.error(f"Error creating ticket from email: {str(e)}")
+            return None
+
+    def _get_company_from_email(self, sender_email: str) -> str:
+        """Map sender email to company ID - simplified for now"""
+        domain = sender_email.split('@')[-1].lower()
+        
+        # Simple domain mapping - you can expand this
+        domain_mapping = {
+            'acme.com': 'CLIENT001',
+            'techstart.com': 'CLIENT002',
+            'flowtls.com': 'FLOWTLS001'
+        }
+        
+        return domain_mapping.get(domain, 'CLIENT001')  # Default company
+
+    def process_pending_emails(self, ticket_service) -> Dict:
+        """Process all unprocessed emails and create tickets"""
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            # Get all unprocessed emails
+            cursor.execute("""
+                SELECT id, sender_email, subject, priority_detected 
+                FROM email_messages WHERE processed = 0 
+                ORDER BY received_date ASC
+            """)
+            
+            pending_emails = cursor.fetchall()
+            conn.close()
+            
+            results = {
+                'total_processed': 0,
+                'tickets_created': 0,
+                'errors': []
+            }
+            
+            for email_record in pending_emails:
+                email_id, sender_email, subject, priority = email_record
+                
+                try:
+                    ticket_id = self.create_ticket_from_email(email_id, ticket_service)
+                    if ticket_id:
+                        results['tickets_created'] += 1
+                        st.success(f"✅ Created ticket #{ticket_id} from email: {subject[:50]}...")
+                    else:
+                        results['errors'].append(f"Failed to create ticket from email ID {email_id}")
+                    
+                    results['total_processed'] += 1
+                    
+                except Exception as e:
+                    results['errors'].append(f"Error processing email {email_id}: {str(e)}")
+            
+            return results
+            
+        except Exception as e:
+            return {
+                'total_processed': 0,
+                'tickets_created': 0,
+                'errors': [f"Database error: {str(e)}"]
+            }
 
 class TicketService:
     def __init__(self, db_manager):
@@ -1369,6 +1478,51 @@ def show_dashboard():
                 st.rerun()
         else:
             st.empty()
+            
+                # Email Integration Test (Admin Only)
+    if user['role'] == 'Admin':
+        st.subheader("📧 Email Integration Test")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🧪 Simulate Email → Ticket", use_container_width=True):
+                # Create a test email
+                test_email = {
+                    'message_id': f'test_{int(time.time())}',
+                    'sender_email': 'customer@acme.com',
+                    'sender_name': 'John Customer',
+                    'recipient_email': 'support@flowtls.com',
+                    'subject': 'URGENT: Website is completely down!',
+                    'body_text': 'Our entire website has been down for 30 minutes. This is critical for our business. Please help immediately!',
+                    'received_date': datetime.now().isoformat(),
+                    'priority_detected': email_service.detect_priority_from_content(
+                        'URGENT: Website is completely down!',
+                        'Our entire website has been down for 30 minutes. This is critical for our business.'
+                    )
+                }
+                
+                # Store the email
+                email_id = email_service.store_email_message(test_email)
+                
+                if email_id > 0:
+                    st.success(f"📧 Test email stored (ID: {email_id})")
+                    st.info(f"🎯 Detected Priority: **{test_email['priority_detected']}**")
+                else:
+                    st.error("Failed to store test email")
+        
+        with col2:
+            if st.button("⚡ Process Pending Emails", use_container_width=True):
+                results = email_service.process_pending_emails(ticket_service)
+                
+                if results['tickets_created'] > 0:
+                    st.success(f"🎫 Created {results['tickets_created']} tickets from {results['total_processed']} emails!")
+                elif results['total_processed'] == 0:
+                    st.info("📭 No pending emails to process")
+                else:
+                    st.warning("📧 Processed emails but no tickets created")
+                
+                for error in results['errors']:
+                    st.error(f"❌ {error}")
     
     with col4:
         if user['permissions'].get('can_create_users', False):
