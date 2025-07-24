@@ -355,7 +355,28 @@ class DatabaseManager:
                     processed BOOLEAN DEFAULT 0,
                     FOREIGN KEY (ticket_id) REFERENCES tickets (id)
                 );
-                
+                CREATE TABLE IF NOT EXISTS email_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    message_id TEXT UNIQUE NOT NULL,
+                    thread_id TEXT,
+                    sender_email TEXT NOT NULL,
+                    sender_name TEXT,
+                    recipient_email TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    body_text TEXT,
+                    body_html TEXT,
+                    received_date TEXT NOT NULL,
+                    processed INTEGER DEFAULT 0,
+                    ticket_id INTEGER,
+                    priority_detected TEXT DEFAULT 'Medium',
+                    category_detected TEXT DEFAULT 'General',
+                    auto_reply_sent INTEGER DEFAULT 0,
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (id)
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_email_messages_sender ON email_messages(sender_email);
+                CREATE INDEX IF NOT EXISTS idx_email_messages_thread ON email_messages(thread_id);
+                CREATE INDEX IF NOT EXISTS idx_email_messages_processed ON email_messages(processed);
                 CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
                 CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
                 CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
@@ -749,6 +770,53 @@ class UserService:
         except Exception as e:
             st.error(f"Error retrieving company: {str(e)}")
             return None
+
+class EmailService:
+    def __init__(self, db_manager):
+        self.db = db_manager
+        self.priority_keywords = {
+            'Critical': ['urgent', 'critical', 'emergency', 'down', 'outage', 'broken'],
+            'High': ['important', 'asap', 'priority', 'issue', 'problem', 'error'],
+            'Medium': ['request', 'question', 'help', 'support'],
+            'Low': ['enhancement', 'feature', 'suggestion', 'feedback']
+        }
+        
+    def detect_priority_from_content(self, subject: str, body: str) -> str:
+        """Analyze email content to detect priority level"""
+        content = f"{subject} {body}".lower()
+        
+        for priority, keywords in self.priority_keywords.items():
+            if any(keyword in content for keyword in keywords):
+                return priority
+        return 'Medium'  # Default priority
+    
+    def store_email_message(self, email_data: Dict) -> int:
+        """Store incoming email in database"""
+        try:
+            conn = self.db.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO email_messages (message_id, thread_id, sender_email, sender_name,
+                                          recipient_email, subject, body_text, body_html,
+                                          received_date, priority_detected, category_detected)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                email_data['message_id'], email_data.get('thread_id', ''),
+                email_data['sender_email'], email_data.get('sender_name', ''),
+                email_data['recipient_email'], email_data['subject'],
+                email_data.get('body_text', ''), email_data.get('body_html', ''),
+                email_data['received_date'], email_data['priority_detected'],
+                email_data.get('category_detected', 'General')
+            ))
+            
+            email_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            return email_id
+        except Exception as e:
+            st.error(f"Error storing email: {str(e)}")
+            return 0
 
 
 class TicketService:
@@ -1167,14 +1235,14 @@ def init_services():
         user_service = UserService(db_manager)
         user_management_service = UserManagementService(db_manager)
         concurrency_manager = ConcurrencyManager(db_manager)
-        return db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager
+        email_service = EmailService(db_manager)  # Add this line
+        return db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service  # Add email_service here
     except Exception as e:
         st.error(f"Failed to initialize services: {str(e)}")
         st.stop()
 
 try:
-    db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager = init_services()
-except Exception as e:
+    db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service = init_services()except Exception as e:
     st.error("Application initialization failed. Please refresh the page.")
     st.stop()
 
