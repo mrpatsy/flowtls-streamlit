@@ -1443,7 +1443,7 @@ def show_login_page():
 
 def show_dashboard():
     # Access global services
-    global ticket_service, email_service, user_service
+    global db_manager, auth_service, ticket_service, user_service, user_management_service, concurrency_manager, email_service
     if not require_auth():
         return
     
