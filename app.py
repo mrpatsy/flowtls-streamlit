@@ -1409,6 +1409,12 @@ def setup_auto_refresh():
     current_time = time.time()
     if (current_time - st.session_state[LAST_REFRESH_KEY]) > AUTO_REFRESH_INTERVAL:
         if st.session_state[REFRESH_ENABLED_KEY]:
+            # Process any pending emails automatically
+            try:
+                email_service.process_pending_emails(ticket_service)
+            except Exception as e:
+                pass  # Silently handle errors to avoid disrupting UI
+            
             st.session_state[LAST_REFRESH_KEY] = current_time
             st.rerun()
 
